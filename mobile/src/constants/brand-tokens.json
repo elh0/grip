@@ -1,0 +1,14 @@
+{
+  "$comment": "From the grip identity v11 (eltio/grip/brand). Blue is the body: only the name, the mark and the tracked body are blue.",
+  "color": {
+    "matBlue": "#4A74FF",
+    "black": "#000000",
+    "white": "#F3F3F0",
+    "tile": "#0D0E0D"
+  },
+  "font": {
+    "sans": "Host Grotesk",
+    "mono": "DM Mono",
+    "weight": 400
+  }
+}

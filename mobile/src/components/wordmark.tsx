@@ -1,0 +1,30 @@
+import Svg, { Path } from 'react-native-svg';
+
+import { color } from '@/constants/theme';
+
+// From brand/grip-wordmark-*.svg (identity v11): Host Grotesk "grip" with the fingertip i.
+const LETTERS =
+  'M304 232Q239 232 185.0 209.5Q131 187 94.5 144.5Q58 102 48 41H137Q151 91 196.5 122.5Q242 154 303 154Q351 154 389.0 133.5Q427 113 449.5 72.5Q472 32 472 -27V-98Q456 -71 429.5 -46.5Q403 -22 366.5 -6.5Q330 9 282 9Q212 9 155.0 -25.0Q98 -59 65.0 -117.5Q32 -176 32 -250Q32 -325 65.0 -383.0Q98 -441 155.0 -474.5Q212 -508 282 -508Q347 -508 396.5 -479.0Q446 -450 472 -410V-496H562V-30Q562 52 528.5 110.5Q495 169 436.5 200.5Q378 232 304 232ZM296 -69Q346 -69 385.0 -92.0Q424 -115 446.0 -156.0Q468 -197 468 -250Q468 -304 446.0 -344.5Q424 -385 385.0 -407.5Q346 -430 296 -430Q247 -430 208.0 -407.5Q169 -385 146.5 -344.5Q124 -304 124 -250Q124 -198 146.5 -156.5Q169 -115 208.0 -92.0Q247 -69 296 -69ZM650 0V-496H740V-418Q757 -457 786.0 -478.5Q815 -500 857 -500H931V-416H848Q816 -416 791.5 -398.0Q767 -380 753.5 -340.5Q740 -301 740 -236V0ZM1001 0V-496H1091V0ZM1177 220V-496H1267V-415Q1291 -451 1335.0 -479.5Q1379 -508 1447 -508Q1520 -508 1575.0 -474.0Q1630 -440 1661.0 -381.0Q1692 -322 1692 -247Q1692 -172 1661.0 -113.5Q1630 -55 1575.0 -21.5Q1520 12 1446 12Q1385 12 1339.0 -12.5Q1293 -37 1267 -81V220ZM1434 -66Q1483 -66 1520.5 -89.0Q1558 -112 1579.5 -153.0Q1601 -194 1601 -248Q1601 -302 1579.5 -343.0Q1558 -384 1520.5 -407.0Q1483 -430 1434 -430Q1386 -430 1348.5 -407.0Q1311 -384 1290.0 -343.0Q1269 -302 1269 -248Q1269 -194 1290.0 -153.0Q1311 -112 1348.5 -89.0Q1386 -66 1434 -66Z';
+const FINGERTIP = 'M962 -636.0V-658.0a84 84 0 0 1 168 0V-636.0';
+const RATIO = 1660 / 1019;
+
+/** Always small: header size, never a headline. Mat blue, white or black only. */
+export function Wordmark({
+  height = 20,
+  tint = color.blue,
+}: {
+  height?: number;
+  tint?: typeof color.blue | typeof color.white | typeof color.black;
+}) {
+  return (
+    <Svg
+      width={height * RATIO}
+      height={height}
+      viewBox="32 -787 1660 1019"
+      accessibilityRole="image"
+      accessibilityLabel="grip">
+      <Path fill={tint} d={LETTERS} />
+      <Path fill="none" stroke={tint} strokeWidth={90} strokeLinecap="round" d={FINGERTIP} />
+    </Svg>
+  );
+}

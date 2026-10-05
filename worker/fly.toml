@@ -1,0 +1,14 @@
+# fly launch --no-deploy --copy-config, then: fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... ANTHROPIC_API_KEY=...
+app = "grip-coach-worker"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[processes]
+  worker = "coach-worker"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "2gb"
+  processes = ["worker"]
