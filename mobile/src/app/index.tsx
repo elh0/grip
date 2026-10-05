@@ -96,7 +96,7 @@ export default function Sessions() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: color.light.bg },
+  screen: { flex: 1, backgroundColor: color.dark.bg },
   empty: { padding: space(5), gap: space(2) },
   fab: { position: 'absolute', left: space(5), right: space(5) },
 });

@@ -1,9 +1,9 @@
 import tokens from './brand-tokens.json';
 
 /**
- * grip theme. Dark to look, light to decide: video and playback sit on black,
- * lists and choices sit on white. Mat blue is only for the wordmark, the crimp and
- * the tracked body; notes, markers and buttons are black or white.
+ * grip theme (identity v11): black backgrounds, #0D0E0D tiles, white text.
+ * Mat blue is only for the wordmark, the crimp and the tracked body; notes, markers
+ * and buttons are white. The light palette is kept for store and print use only.
  */
 export const color = {
   blue: tokens.color.matBlue,

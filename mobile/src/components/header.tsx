@@ -7,7 +7,7 @@ import { color, space, type Tone } from '@/constants/theme';
 import { Wordmark } from './wordmark';
 
 /** Small wordmark left, optional action right. */
-export function Header({ tone = 'light', right }: { tone?: Tone; right?: ReactNode }) {
+export function Header({ tone = 'dark', right }: { tone?: Tone; right?: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
     <View

@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "grip",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
     "ios": {
       "bundleIdentifier": "com.gripcoach.app",

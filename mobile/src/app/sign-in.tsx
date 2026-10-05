@@ -59,7 +59,7 @@ export default function SignIn() {
             value={code}
             onChangeText={setCode}
             placeholder="Code"
-            placeholderTextColor={color.light.quiet}
+            placeholderTextColor={color.dark.quiet}
             keyboardType="number-pad"
             autoComplete="one-time-code"
             textContentType="oneTimeCode"
@@ -71,7 +71,7 @@ export default function SignIn() {
             value={email}
             onChangeText={setEmail}
             placeholder="Email"
-            placeholderTextColor={color.light.quiet}
+            placeholderTextColor={color.dark.quiet}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
@@ -96,13 +96,13 @@ export default function SignIn() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: color.light.bg, paddingHorizontal: space(5) },
+  screen: { flex: 1, backgroundColor: color.dark.bg, paddingHorizontal: space(5) },
   body: { flex: 1, justifyContent: 'center', gap: space(4) },
   input: {
     ...type.title,
-    color: color.light.text,
+    color: color.dark.text,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.light.text,
+    borderBottomColor: color.dark.text,
     paddingVertical: space(2),
   },
   actions: { gap: space(3) },

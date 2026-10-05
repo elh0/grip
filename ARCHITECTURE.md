@@ -65,10 +65,9 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 - `app/session/[id].tsx`: player (expo-video), timeline with a tick per note, summary and cue
   cards; tapping a card jumps to that moment. Live status while it's being reviewed. Delete.
 - `lib/`: Supabase client, upload, push registration, feedback helpers (tested).
-- `constants/theme.ts` + `brand-tokens.json`: identity v11. Dark to look, light to decide:
-  video and playback on black, lists and choices on white. Mat blue only for the wordmark, the
-  crimp and the tracked body; notes, markers and buttons are black or white. Host Grotesk and
-  DM Mono, regular weight only.
+- `constants/theme.ts` + `brand-tokens.json`: identity v11. Black backgrounds, #0D0E0D tiles,
+  white text. Mat blue only for the wordmark, the crimp and the tracked body; notes, markers
+  and buttons are white. Host Grotesk and DM Mono, regular weight only.
 
 ## Known limits
 

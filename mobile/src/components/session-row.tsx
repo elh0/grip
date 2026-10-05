@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space(5),
     gap: space(1),
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.light.rule,
+    borderBottomColor: color.dark.rule,
   },
   meta: { flexDirection: 'row', justifyContent: 'space-between' },
 });

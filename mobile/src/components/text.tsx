@@ -6,7 +6,7 @@ type Variant = keyof typeof typo;
 
 export function Text({
   variant = 'body',
-  tone = 'light',
+  tone = 'dark',
   quiet = false,
   style,
   ...rest

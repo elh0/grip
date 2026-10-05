@@ -8,7 +8,7 @@ import { Text } from './text';
 export function PillButton({
   label,
   onPress,
-  tone = 'light',
+  tone = 'dark',
   variant = 'solid',
   disabled,
   busy,

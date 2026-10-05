@@ -118,7 +118,7 @@ export default function Record() {
   }
 
   return (
-    <View style={[styles.light, { paddingTop: insets.top + space(3) }]}>
+    <View style={[styles.screen, { paddingTop: insets.top + space(3) }]}>
       <View style={styles.topRow}>
         <Text variant="label">New session</Text>
         {step !== 'uploading' ? (
@@ -137,7 +137,7 @@ export default function Record() {
               disabled={step === 'uploading'}
               onPress={() => setSport(s)}
               style={[styles.segmentItem, sport === s && styles.segmentOn]}>
-              <Text variant="label" style={{ color: sport === s ? color.white : color.black }}>
+              <Text variant="label" style={{ color: sport === s ? color.black : color.white }}>
                 {sportLabel[s]}
               </Text>
             </Pressable>
@@ -149,7 +149,7 @@ export default function Record() {
           onChangeText={setNote}
           editable={step !== 'uploading'}
           placeholder={notePlaceholder[sport]}
-          placeholderTextColor={color.light.quiet}
+          placeholderTextColor={color.dark.quiet}
           multiline
           style={styles.input}
         />
@@ -183,7 +183,7 @@ export default function Record() {
 }
 
 const styles = StyleSheet.create({
-  light: { flex: 1, backgroundColor: color.light.bg },
+  screen: { flex: 1, backgroundColor: color.dark.bg },
   dark: { flex: 1, backgroundColor: color.black },
   topRow: {
     flexDirection: 'row',
@@ -192,20 +192,20 @@ const styles = StyleSheet.create({
     paddingBottom: space(3),
   },
   body: { padding: space(5), gap: space(4) },
-  segment: { flexDirection: 'row', borderWidth: 1, borderColor: color.black, borderRadius: 999, overflow: 'hidden' },
+  segment: { flexDirection: 'row', borderWidth: 1, borderColor: color.white, borderRadius: 999, overflow: 'hidden' },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space(3) },
-  segmentOn: { backgroundColor: color.black },
+  segmentOn: { backgroundColor: color.white },
   input: {
     ...type.body,
-    color: color.light.text,
+    color: color.dark.text,
     minHeight: 72,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.light.text,
+    borderBottomColor: color.dark.text,
     paddingVertical: space(2),
     textAlignVertical: 'top',
   },
-  bar: { height: 2, backgroundColor: color.light.rule },
-  barFill: { height: 2, backgroundColor: color.black },
+  bar: { height: 2, backgroundColor: color.dark.rule },
+  barFill: { height: 2, backgroundColor: color.white },
   actions: { paddingHorizontal: space(5), gap: space(3) },
   cameraBar: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: space(4), paddingHorizontal: space(5) },
   center: { textAlign: 'center' },

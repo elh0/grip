@@ -28,12 +28,12 @@ function Gate() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: color.light.bg },
+        contentStyle: { backgroundColor: color.dark.bg },
       }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="record" options={{ presentation: 'fullScreenModal' }} />
-      <Stack.Screen name="session/[id]" options={{ contentStyle: { backgroundColor: color.black } }} />
+      <Stack.Screen name="session/[id]" />
     </Stack>
   );
 }
@@ -49,7 +49,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
         <Gate />
       </AuthProvider>
     </SafeAreaProvider>
