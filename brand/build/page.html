@@ -1,0 +1,433 @@
+<title>Grip Identity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400&family=DM+Mono:wght@400&display=swap">
+<style>
+/* v11.1: logo always small (Elliot: "never needs to be big, it should be quiet"); hero is a plain line of text.
+   v11: wordmark LOCKED, the fingertip i (outlined in wordmark.py). Crimp mark for icon and splash only.
+   v10: Host Grotesk name in mat blue, mark 15 Crimp (four fingertips on an edge), mat blue replaces mint.
+   v9: the page is about the sport rather than Open's timetable.
+   Kept from Open: black, one regular sans, mono caps labels. Dropped: clock, week strip, class cards, tinted panels, pills.
+   The brand is the wireframe now: a tracked body in mat blue on a dark wall or mat, with the analysis drawn over it. */
+:root {
+  --black: #000; --tile: #0D0E0D; --white: #F3F3F0; --line: {{LINE}};
+  --text: rgba(243,243,240,.95); --quiet: rgba(243,243,240,.55); --rule: rgba(243,243,240,.16);
+  --sans: "Host Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--black); color: var(--text); font: 400 18px/1.4 var(--sans); margin: 0; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.wrap { padding-inline: 28px; max-width: 1600px; margin: 0 auto; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } body { font-size: 16px; } }
+.m { font: 400 12px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.q { color: var(--quiet); }
+h2, h3 { font-weight: 400; margin: 0; letter-spacing: -.025em; }
+p { margin: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:focus-visible { outline: 1px solid var(--line); outline-offset: 4px; }
+
+/* the name: grip in Host Grotesk, mat blue; the lockup puts the crimp before it */
+.word { color: var(--line); letter-spacing: -.03em; line-height: .9; }
+.wsvg { display: block; width: 100%; height: auto; }
+.logo .wsvg { height: 100%; width: auto; }
+.logo { display: block; height: 20px; color: var(--line); justify-self: start; }
+
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding-block: 24px; }
+.top .r { justify-self: end; }
+@media (max-width: 600px) { .top { grid-template-columns: 1fr auto; } .top .r { display: none; } }
+.tog { display: flex; gap: 18px; }
+.tog button { opacity: .45; } .tog button[aria-pressed="true"] { opacity: 1; text-decoration: underline; text-underline-offset: 5px; }
+
+.hero h1 { font-weight: 400; font-size: clamp(34px, 3.6vw, 52px); line-height: 1.04; letter-spacing: -.025em; max-width: 18ch; margin: 56px 0 28px; }
+.stage { position: relative; background: var(--tile); border-radius: 6px; overflow: hidden; }
+.stage svg { display: block; width: 100%; height: 100%; }
+.stage .tl, .stage .tr, .stage .bl, .stage .br { position: absolute; }
+.stage .tl { top: 14px; left: 16px; } .stage .tr { top: 14px; right: 16px; }
+.stage .bl { bottom: 14px; left: 16px; } .stage .br { bottom: 14px; right: 16px; text-align: right; }
+.hero .stage { aspect-ratio: 2 / 1; }
+@media (max-width: 700px) { .hero .stage { aspect-ratio: 4 / 5; } }
+
+section { padding-top: 120px; }
+.head { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 32px; align-items: end; margin-bottom: 24px; }
+.head h2 { font-size: clamp(34px, 3.6vw, 52px); line-height: 1.04; max-width: 16ch; }
+.head p { max-width: 44ch; justify-self: end; color: var(--quiet); }
+@media (max-width: 860px) { .head { grid-template-columns: 1fr; } .head p { justify-self: start; } }
+
+.split { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 8px; }
+.split .stage { aspect-ratio: 4 / 3; }
+.legend { background: var(--tile); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; }
+.legend ol { list-style: none; margin: 0; padding: 0; counter-reset: n; }
+.legend li { display: grid; grid-template-columns: 3ch 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.legend li span:last-child { color: var(--quiet); font-size: 15px; }
+.legend li b { font-weight: 400; display: block; color: var(--text); font-size: 18px; }
+.legend .foot { margin-top: auto; padding-top: 18px; }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+
+.readout { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+.readout div { background: var(--tile); border-radius: 6px; padding: 16px; display: grid; gap: 6px; }
+.readout b { font-weight: 400; font-size: clamp(26px, 2.6vw, 38px); letter-spacing: -.03em; line-height: 1; }
+@media (max-width: 700px) { .readout { grid-template-columns: 1fr; } }
+.cmp .stage { aspect-ratio: 2 / 1; }
+@media (max-width: 700px) { .cmp .stage { aspect-ratio: 1 / 1; } }
+
+/* identity tiles: plain, no tint */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.tile { background: var(--tile); border-radius: 6px; aspect-ratio: 1; position: relative; display: grid; place-items: center; overflow: hidden; }
+.tile .tl { position: absolute; top: 14px; left: 16px; }
+.cap { padding: 12px 2px 26px; max-width: 40ch; }
+.cap b { font-weight: 400; display: block; }
+.cap span { color: var(--quiet); font-size: 15px; }
+@media (max-width: 860px) { .tiles { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .tiles { grid-template-columns: 1fr; } }
+.ic { display: block; width: 100%; height: auto; }
+.mk { display: block; width: 100%; height: auto; }
+.sws { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap: 6px; width: 74%; }
+.sws { aspect-ratio: 1.3; } .sws div { aspect-ratio: auto; border-radius: 3px; padding: 8px; display: flex; flex-direction: column; justify-content: flex-end; font-size: 13px; }
+
+.rules { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0 28px; }
+.rules dl { margin: 0 0 30px; }
+.rules dt { padding-bottom: 10px; border-bottom: 1px solid var(--rule); margin-bottom: 10px; }
+.rules dd { margin: 0 0 4px; color: var(--quiet); }
+@media (max-width: 860px) { .rules { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .rules { grid-template-columns: 1fr; } }
+.foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 80px 30px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .draw { stroke-dasharray: 1; animation: draw 2.4s cubic-bezier(.45,.05,.3,1) both; }
+  @keyframes draw { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="top m">
+    <span class="logo">{{WORD}}</span>
+    <div class="tog" role="group" aria-label="Sport"><button type="button" data-sport="climb" aria-pressed="true">Climb</button><span class="q">/</span><button type="button" data-sport="roll" aria-pressed="false">Roll</button></div>
+    <span class="r q">Identity (v11)</span>
+  </header>
+
+  <div class="hero">
+    <h1>Film a climb or a roll. Grip shows you what your body did.</h1>
+    <div class="stage">
+      <svg id="hero" aria-label="A wireframe climber moving up a wall, tracked in mat blue"></svg>
+      <span class="tl m q" id="hero-tl">Board / 40°</span>
+      <span class="tr m q" id="hero-tc">0:00</span>
+      <span class="bl m" id="hero-bl">Tracking 15 points</span>
+      <span class="br m q" id="hero-br">Climb</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="head">
+      <h2>How it reads you</h2>
+      <p>Film from the floor or the side of the mat. Grip finds fifteen points on the body, follows your centre of mass, measures the angles that matter, and pins a note to the moment it goes wrong.</p>
+    </div>
+    <div class="split">
+      <div class="stage">
+        <svg id="an" aria-label="The same climber with the analysis drawn over: centre of mass trail, centre line, joint angles and a note"></svg>
+        <span class="tl m q">Analysis</span>
+        <span class="tr m q" id="an-tc">0:00</span>
+      </div>
+      <div class="legend">
+        <ol>
+          <li><span class="m q">01</span><span><b>Points</b>Fifteen joints, drawn as one blue wireframe.</span></li>
+          <li><span class="m q">02</span><span><b>Centre of mass</b>A trail of where your weight went, move by move.</span></li>
+          <li><span class="m q">03</span><span><b>Centre line</b>Dropped from your weight to the floor, to show when you are off balance.</span></li>
+          <li><span class="m q">04</span><span><b>Angles</b>Knees and elbows, measured each frame. Straight arms save energy.</span></li>
+          <li><span class="m q">05</span><span><b>Notes</b>Three at most, each pinned to a joint and a time.</span></li>
+        </ol>
+        <span class="foot m q" id="an-note">Right arm / stay straight</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cmp">
+    <div class="head">
+      <h2>Against a friend, or from the side</h2>
+      <p>Film a friend on the same problem and Grip lays one body over the other. Film from two angles and it shows the move both ways, so you can see how far your hips come off the wall.</p>
+    </div>
+    <div class="stage">
+      <svg id="cmp" aria-label="Your wireframe compared with a friend's on the same holds"></svg>
+      <div class="tl m tog" role="group" aria-label="Compare"><button type="button" data-cmp="friend" aria-pressed="true">A friend</button><span class="q">/</span><button type="button" data-cmp="side" aria-pressed="false">Side view</button></div>
+      <span class="bl m" id="cmp-bl"><span style="color:var(--line)">——</span> You &nbsp; <span class="q">- - - Sam</span></span>
+    </div>
+    <div class="readout" id="cmp-read">
+      <div><span class="m q">Hips</span><b>4 cm lower</b><span class="q">than Sam through the crux</span></div>
+      <div><span class="m q">Reach</span><b>0.3 s later</b><span class="q">on every hand move</span></div>
+      <div><span class="m q">Feet</span><b>2 of 4</b><span class="q">placed as quietly as Sam's</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Identity</h2><p>Everything else stays plain, so the wireframe can do the talking.</p></div>
+    <div class="tiles">
+      <div>
+        <div class="tile"><span class="tl m q">Icon</span><div style="width:72%;display:grid;grid-template-columns:1fr 1fr;gap:10%"><div style="border-radius:22%;overflow:hidden;outline:1px solid var(--rule);outline-offset:-1px">{{ICON}}</div><div style="border-radius:22%;overflow:hidden">{{ICON_BLUE}}</div></div></div>
+        <p class="cap"><b>The crimp on a square</b><span>Blue on black is the app icon. White on blue is for stores, socials and anywhere the icon sits on a light page. Square file; the phone rounds it.</span></p>
+      </div>
+      <div>
+        <div class="tile"><span class="tl m q">Mark</span><div style="width:46%;color:var(--line)">{{MARK_DRAW}}</div></div>
+        <p class="cap"><b>Crimp</b><span>Four fingertips on an edge. It is how you hold a crimp on the wall and how you grip a collar on the mat. One stroke weight, round ends. Used for the app icon and the splash, never next to the wordmark.</span></p>
+      </div>
+      <div>
+        <div class="tile"><span class="tl m q">Name</span><div style="width:17%;color:var(--line)">{{WORD}}</div></div>
+        <p class="cap"><b>The fingertip i, kept quiet</b><span>Host Grotesk, lowercase, in mat blue, with one fingertip from the crimp for the dot of the i. Always small: the size of a header, never a headline.</span></p>
+      </div>
+      <div>
+        <div class="tile"><span class="tl m q">Colour</span>
+          <div class="sws">
+            <div style="background:var(--line);color:#000">mat blue<span style="opacity:.6">{{LINE}}</span></div>
+            <div style="background:#000;outline:1px solid var(--rule);outline-offset:-1px">black</div>
+            <div style="background:var(--white);color:#000">white</div>
+          </div>
+        </div>
+        <p class="cap"><b>Blue is the body</b><span>Only the name, the mark and the tracked body are blue. Notes, holds and the friend's outline are white.</span></p>
+      </div>
+      <div>
+        <div class="tile"><span class="tl m q">Type</span>
+          <div style="width:78%;display:grid;gap:18px"><span style="font-size:clamp(26px,2.6vw,40px);line-height:1.05;letter-spacing:-.03em">Turn the left hip in so the right foot holds.</span><span class="m">0:42 &nbsp; Left hip</span></div>
+        </div>
+        <p class="cap"><b>Host Grotesk and DM Mono</b><span>Regular weight only. Size makes the hierarchy. Mono caps for times and labels.</span></p>
+      </div>
+      <div>
+        <div class="tile"><span class="tl m q">Splash</span><div style="width:22%;color:var(--line)">{{MARK_DRAW}}</div></div>
+        <p class="cap"><b>The fingers close</b><span>The app opens with the crimp drawing itself on black, then the wireframe takes over.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Rules</h2><p></p></div>
+    <div class="rules">
+      <dl><dt>Logo</dt><dd>The fingertip-i wordmark, from the files only</dd><dd>Small and quiet: header size, never a headline</dd><dd>Mat blue, white or black, nothing else</dd><dd>Never next to the crimp: the i already holds on</dd><dd>Hyphens only in the address, g-r-i-p.com</dd></dl>
+      <dl><dt>Wireframe</dt><dd>Fifteen points, blue, hairline</dd><dd>Joints as open dots</dd><dd>Holds and mats drawn in grey outline</dd></dl>
+      <dl><dt>Analysis</dt><dd>White annotations over the blue body</dd><dd>Mono labels, real units</dd><dd>Three notes at most</dd></dl>
+      <dl><dt>Compare</dt><dd>You in blue, a friend in white dashes</dd><dd>Same holds, same timing</dd></dl>
+      <dl><dt>Type</dt><dd>Host Grotesk 400, any size</dd><dd>DM Mono caps for labels</dd><dd>No bold, condensed or italic</dd></dl>
+      <dl><dt>Never</dt><dd>Blue running text or fills (the wordmark is the one blue word)</dd><dd>The name typed in a font in place of the wordmark</dd><dd>Gradients, glow, stock photos</dd><dd>The logo blown up as a graphic</dd><dd>Scores out of ten</dd></dl>
+    </div>
+  </section>
+
+  <footer class="foot m q"><span>grip (2026) / g-r-i-p.com</span><span>Wireframes are drawn live in the page</span></footer>
+</div>
+
+<script>
+(function () {
+  var MINT = '{{LINE}}', WHITE = '#F3F3F0';
+  var NS = 'http://www.w3.org/2000/svg';
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function hash(a, b) { var x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); }
+  function f(n) { return n.toFixed(2); }
+  function tc(t) { var s = Math.floor(t); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+  /* ---- climber: four limbs move up one hold at a time, the body follows by two-bone IK ---- */
+  var D = 8, ARM = 10, LEG = 11, PH = 1.15;
+  var BASE = { hL: [-9, 40], hR: [8, 44], fL: [-6, 0], fR: [6, 4] };
+  var ORDER = ['hR', 'fL', 'hL', 'fR'];
+  var NOTES = { hR: ['Right arm', 'stay straight'], fL: ['Left foot', 'place it quietly'], hL: ['Left hip', 'turn it in'], fR: ['Head', 'look before you reach'] };
+  function limbs(t) {
+    var s = Math.max(0, t) / PH, n = Math.floor(s / 4), k = Math.floor(s) % 4, p = ease(Math.min(1, (s % 1) * 1.3)), o = {};
+    ORDER.forEach(function (nm, i) {
+      var moves = n + (i < k ? 1 : 0), pr = i === k ? p : 0, b = BASE[nm];
+      var bulge = Math.sin(Math.PI * pr) * (nm[0] === 'h' ? 2.6 : 1.6) * (nm[1] === 'L' ? -1 : 1);
+      o[nm] = [b[0] + bulge, b[1] + D * (moves + pr), pr];
+    });
+    o.active = ORDER[k]; o.prog = p;
+    return o;
+  }
+  function ik(a, b, l1, l2, sg) {
+    var dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy), mx = l1 + l2 - .01, bx = b[0], by = b[1];
+    if (d > mx) { bx = a[0] + dx / d * mx; by = a[1] + dy / d * mx; d = mx; }
+    var an = Math.atan2(by - a[1], bx - a[0]), c = (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), off = Math.acos(Math.max(-1, Math.min(1, c)));
+    return [[a[0] + l1 * Math.cos(an + sg * off), a[1] + l1 * Math.sin(an + sg * off)], [bx, by]];
+  }
+  function body(L, o) {
+    o = o || {};
+    var fy = (L.fL[1] + L.fR[1]) / 2, hy = (L.hL[1] + L.hR[1]) / 2, fx = (L.fL[0] + L.fR[0]) / 2, hx = (L.hL[0] + L.hR[0]) / 2;
+    var P = [(fx + hx) / 2 * .8 + (o.shift || 0), (fy + hy) / 2 - 7 - (o.sag || 0)];
+    var S = [P[0] * .5 + hx * .3, P[1] + 16];
+    var J = { P: P, S: S, shL: [S[0] - 5, S[1]], shR: [S[0] + 5, S[1]], hiL: [P[0] - 3.5, P[1]], hiR: [P[0] + 3.5, P[1]], neck: [S[0], S[1] + 2], head: [S[0], S[1] + 6] };
+    var a = ik(J.shL, L.hL, ARM, ARM, 1); J.elL = a[0]; J.haL = a[1];
+    a = ik(J.shR, L.hR, ARM, ARM, -1); J.elR = a[0]; J.haR = a[1];
+    a = ik(J.hiL, L.fL, LEG, LEG, -1); J.knL = a[0]; J.ftL = a[1];
+    a = ik(J.hiR, L.fR, LEG, LEG, 1); J.knR = a[0]; J.ftR = a[1];
+    J.com = [P[0] * .5 + S[0] * .3 + (J.haL[0] + J.haR[0] + J.ftL[0] + J.ftR[0]) * .05, P[1] * .5 + S[1] * .3 + (J.haL[1] + J.haR[1] + J.ftL[1] + J.ftR[1]) * .05];
+    return J;
+  }
+  var BONES = [['shL', 'shR'], ['hiL', 'hiR'], ['shL', 'hiL'], ['shR', 'hiR'], ['shL', 'elL'], ['elL', 'haL'], ['shR', 'elR'], ['elR', 'haR'], ['hiL', 'knL'], ['knL', 'ftL'], ['hiR', 'knR'], ['knR', 'ftR'], ['S', 'neck']];
+  var MESH = [['shL', 'hiR'], ['shR', 'hiL'], ['elL', 'hiL'], ['elR', 'hiR']];
+  var DOTS = ['shL', 'shR', 'elL', 'elR', 'haL', 'haR', 'hiL', 'hiR', 'knL', 'knR', 'ftL', 'ftR', 'neck', 'S', 'P'];
+
+  function figure(J, X, Y, col, dash, op) {
+    var s = '', d = dash ? ' stroke-dasharray="3 3"' : '';
+    BONES.forEach(function (b) { s += '<line x1="' + f(X(J[b[0]])) + '" y1="' + f(Y(J[b[0]])) + '" x2="' + f(X(J[b[1]])) + '" y2="' + f(Y(J[b[1]])) + '"' + d + '/>'; });
+    var mesh = '';
+    MESH.forEach(function (b) { mesh += '<line x1="' + f(X(J[b[0]])) + '" y1="' + f(Y(J[b[0]])) + '" x2="' + f(X(J[b[1]])) + '" y2="' + f(Y(J[b[1]])) + '"/>'; });
+    var dots = '';
+    if (!dash) DOTS.forEach(function (k) { dots += '<circle cx="' + f(X(J[k])) + '" cy="' + f(Y(J[k])) + '" r=".75"/>'; });
+    var hd = '<circle cx="' + f(X(J.head)) + '" cy="' + f(Y(J.head)) + '" r="2.7" fill="none"' + d + '/>';
+    return '<g stroke="' + col + '" stroke-width="1.4" vector-effect="non-scaling-stroke" fill="none" opacity="' + (op || 1) + '" stroke-linecap="round">' +
+      '<g vector-effect="non-scaling-stroke">' + s + hd + '</g>' +
+      '<g opacity=".35">' + mesh + '</g>' +
+      '<g fill="#0D0E0D">' + dots + '</g></g>';
+  }
+  function fixStroke(svg) { svg.querySelectorAll('line,circle,path,polyline,polygon').forEach(function (e) { e.setAttribute('vector-effect', 'non-scaling-stroke'); }); }
+
+  function wall(x0, x1, y0, y1, X, Y, holds) {
+    var s = '<g stroke="' + WHITE + '" stroke-opacity=".07" stroke-width="1">';
+    for (var gx = Math.ceil(x0 / 8) * 8; gx <= x1; gx += 8) s += '<line x1="' + f(X([gx, 0])) + '" y1="' + f(Y([0, y0])) + '" x2="' + f(X([gx, 0])) + '" y2="' + f(Y([0, y1])) + '"/>';
+    for (var gy = Math.ceil(y0 / 8) * 8; gy <= y1; gy += 8) s += '<line x1="' + f(X([x0, 0])) + '" y1="' + f(Y([0, gy])) + '" x2="' + f(X([x1, 0])) + '" y2="' + f(Y([0, gy])) + '"/>';
+    s += '</g>';
+    if (!holds) return s;
+    s += '<g stroke="' + WHITE + '" stroke-opacity=".38" stroke-width="1" fill="none">';
+    var r0 = Math.floor(y0 / D) - 1, r1 = Math.ceil(y1 / D) + 1, r, i;
+    function hold(cx, cy, seed, sz) {
+      var pts = [], n = 5;
+      for (var v = 0; v < n; v++) { var an = v / n * Math.PI * 2 + seed * 3, rr = sz * (.7 + .5 * hash(seed, v)); pts.push(f(X([cx + Math.cos(an) * rr, 0])) + ',' + f(Y([0, cy + Math.sin(an) * rr * .8]))); }
+      return '<polygon points="' + pts.join(' ') + '"/>';
+    }
+    for (r = r0; r <= r1; r++) {
+      ORDER.forEach(function (nm, j) { var b = BASE[nm]; var y = b[1] + D * r; if (y > y0 - 4 && y < y1 + 4) s += hold(b[0], y - (nm[0] === 'h' ? 1 : 1.2), r * 4 + j, nm[0] === 'h' ? 1.6 : 1.3); });
+      for (i = 0; i < 3; i++) { var hx = -70 + hash(r, i + 9) * 140; if (Math.abs(hx) < 13) continue; s += hold(hx, D * r + hash(r, i + 3) * 8, r * 7 + i, .9 + hash(i, r) * 1.4); }
+    }
+    return s + '</g>';
+  }
+
+  /* ---- rolling: two bodies swap between closed guard and mount ---- */
+  var KA = { head: [38, 93], neck: [48, 95], elN: [62, 82], haN: [80, 66], elF: [64, 90], haF: [84, 78], hip: [84, 96], knN: [100, 78], ftN: [122, 84], knF: [102, 86], ftF: [124, 92] };
+  var KB = { head: [96, 40], neck: [100, 50], elN: [92, 64], haN: [82, 86], elF: [104, 66], haF: [90, 90], hip: [116, 80], knN: [108, 99], ftN: [140, 99], knF: [116, 99], ftF: [144, 99] };
+  var RB = [['neck', 'hip'], ['neck', 'elN'], ['elN', 'haN'], ['neck', 'elF'], ['elF', 'haF'], ['hip', 'knN'], ['knN', 'ftN'], ['hip', 'knF'], ['knF', 'ftF']];
+  function blend(a, b, u, lift) {
+    var o = {}; Object.keys(a).forEach(function (k) { o[k] = [lerp(a[k][0], b[k][0], u), lerp(a[k][1], b[k][1], u) - Math.sin(Math.PI * u) * lift]; }); return o;
+  }
+  function rollU(t) { var c = 5.4, s = (t % c + c) % c; if (s < 1.1) return [0, 0]; if (s < 2.7) return [ease((s - 1.1) / 1.6), 1]; if (s < 3.8) return [1, 1]; return [1 - ease((s - 3.8) / 1.6), 2]; }
+  function sideFig(K, col, op) {
+    var s = '<g stroke="' + col + '" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="' + op + '">';
+    RB.forEach(function (b) { var far = b[0].slice(-1) === 'F' || b[1].slice(-1) === 'F'; s += '<line x1="' + f(K[b[0]][0]) + '" y1="' + f(K[b[0]][1]) + '" x2="' + f(K[b[1]][0]) + '" y2="' + f(K[b[1]][1]) + '"' + (far ? ' stroke-opacity=".4"' : '') + '/>'; });
+    s += '<line x1="' + f(K.neck[0]) + '" y1="' + f(K.neck[1]) + '" x2="' + f(K.knN[0]) + '" y2="' + f(K.knN[1]) + '" stroke-opacity=".25"/>';
+    var tx = K.neck[0] - K.hip[0], ty = K.neck[1] - K.hip[1], tl = Math.hypot(tx, ty) || 1, hx = K.neck[0] + tx / tl * 5.4, hy = K.neck[1] + ty / tl * 5.4;
+    s += '<circle cx="' + f(hx) + '" cy="' + f(hy) + '" r="4.4"/><g fill="#0D0E0D">';
+    Object.keys(K).forEach(function (k) { if (k !== 'head') s += '<circle cx="' + f(K[k][0]) + '" cy="' + f(K[k][1]) + '" r="1"/>'; });
+    return s + '</g></g>';
+  }
+  var trail = [];
+  function drawRoll(svg, t) {
+    var uu = rollU(t), u = uu[0];
+    var A = blend(KA, KB, u, 14), B = blend(KB, KA, u, 5);
+    svg.setAttribute('viewBox', '0 22 184 92');
+    var s = '<g stroke="' + WHITE + '" stroke-opacity=".08">';
+    for (var x = 0; x <= 184; x += 16) s += '<line x1="' + x + '" y1="100" x2="' + (92 + (x - 92) * 1.6) + '" y2="114"/>';
+    s += '<line x1="0" y1="100" x2="184" y2="100" stroke-opacity=".3"/><line x1="0" y1="106" x2="184" y2="106"/></g>';
+    trail.push([A.hip[0], A.hip[1]]); if (trail.length > 70) trail.shift();
+    s += '<polyline fill="none" stroke="' + WHITE + '" stroke-opacity=".35" stroke-dasharray="1 2" points="' + trail.map(function (p) { return f(p[0]) + ',' + f(p[1]); }).join(' ') + '"/>';
+    s += sideFig(B, MINT, .6) + sideFig(A, MINT, 1);
+    svg.innerHTML = s; fixStroke(svg);
+    var lab = u < .08 ? 'Closed guard' : u > .92 ? 'Mount' : 'Sweep';
+    return lab;
+  }
+
+  /* ---- scenes ---- */
+  var cam = { hero: null, an: null, cmp: null }, comTrail = [];
+  function drawClimb(svg, t, mode, key) {
+    var L = limbs(t), J = body(L), h = mode === 'an' ? 84 : 100, asp = svg.clientWidth / Math.max(1, svg.clientHeight), w = h * (isFinite(asp) && asp > .3 ? asp : 2);
+    var target = J.P[1] + 7;
+    cam[key] = cam[key] == null ? target : cam[key] + (target - cam[key]) * .08;
+    var cy = cam[key];
+    svg.setAttribute('viewBox', (-w / 2) + ' ' + (-h / 2) + ' ' + w + ' ' + h);
+    var ox = mode === 'side' ? -w * .2 : 0;
+    var X = function (p) { return p[0] + ox; }, Y = function (p) { return -(p[1] - cy); };
+    var s = wall(-w / 2 - ox, mode === 'side' ? 4 - ox : w / 2, cy - h / 2 - 2, cy + h / 2 + 2, X, Y, true);
+
+    if (mode === 'friend') {
+      var Lf = limbs(t - .35), Jf = body(Lf, { sag: 3, shift: 1.6 });
+      s += figure(Jf, X, Y, WHITE, true, .7);
+    }
+    s += figure(J, X, Y, MINT, false, 1);
+
+    if (mode === 'an') {
+      comTrail.push([J.com[0], J.com[1]]); if (comTrail.length > 120) comTrail.shift();
+      s += '<polyline fill="none" stroke="' + WHITE + '" stroke-opacity=".45" stroke-dasharray="1 1.5" points="' + comTrail.map(function (p) { return f(X(p)) + ',' + f(Y(p)); }).join(' ') + '"/>';
+      var fl = Math.min(J.ftL[1], J.ftR[1]) - 3;
+      s += '<line x1="' + f(X(J.com)) + '" y1="' + f(Y(J.com)) + '" x2="' + f(X(J.com)) + '" y2="' + f(Y([0, fl])) + '" stroke="' + MINT + '" stroke-dasharray="1.5 1.5"/>';
+      s += '<circle cx="' + f(X(J.com)) + '" cy="' + f(Y(J.com)) + '" r="1.3" fill="' + WHITE + '"/>';
+      s += '<line x1="' + f(X(J.ftL)) + '" y1="' + f(Y([0, fl])) + '" x2="' + f(X(J.ftR)) + '" y2="' + f(Y([0, fl])) + '" stroke="' + WHITE + '" stroke-opacity=".5"/>';
+      function ang(a, b, c, side) {
+        var a1 = Math.atan2(a[1] - b[1], a[0] - b[0]), a2 = Math.atan2(c[1] - b[1], c[0] - b[0]);
+        var d = Math.abs(a1 - a2); if (d > Math.PI) d = 2 * Math.PI - d;
+        var r = 3, p1 = [b[0] + Math.cos(a1) * r, b[1] + Math.sin(a1) * r], p2 = [b[0] + Math.cos(a2) * r, b[1] + Math.sin(a2) * r];
+        var sw = ((a2 - a1 + 4 * Math.PI) % (2 * Math.PI)) < Math.PI ? 0 : 1;
+        return '<path d="M' + f(X(p1)) + ' ' + f(Y(p1)) + 'A' + r + ' ' + r + ' 0 0 ' + sw + ' ' + f(X(p2)) + ' ' + f(Y(p2)) + '" fill="none" stroke="' + WHITE + '"/>' +
+          '<text x="' + f(X(b) + side * 4.5) + '" y="' + f(Y(b) + 1) + '" text-anchor="' + (side < 0 ? 'end' : 'start') + '">' + Math.round(d * 180 / Math.PI) + '°</text>';
+      }
+      s += '<g fill="' + WHITE + '" font-family="DM Mono, monospace" font-size="1.7">';
+      s += ang(J.hiL, J.knL, J.ftL, -1) + ang(J.shR, J.elR, J.haR, 1);
+      var nm = L.active, nt = NOTES[nm], anchor = nm === 'hR' ? J.elR : nm === 'fL' ? J.ftL : nm === 'hL' ? J.hiL : J.head;
+      var lx = nm === 'hR' || nm === 'fR' ? 16 : -16, side = lx > 0 ? 'start' : 'end';
+      s += '<line x1="' + f(X(anchor)) + '" y1="' + f(Y(anchor)) + '" x2="' + f(X(anchor) + lx) + '" y2="' + f(Y(anchor) - 6) + '" stroke="' + WHITE + '" stroke-opacity=".6"/>';
+      s += '<text x="' + f(X(anchor) + lx + (lx > 0 ? 1 : -1)) + '" y="' + f(Y(anchor) - 7) + '" text-anchor="' + side + '">' + nt[0].toUpperCase() + '</text>';
+      s += '<text x="' + f(X(anchor) + lx + (lx > 0 ? 1 : -1)) + '" y="' + f(Y(anchor) - 4.6) + '" text-anchor="' + side + '" fill-opacity=".6">' + nt[1].toUpperCase() + '</text></g>';
+      document.getElementById('an-note').textContent = nt[0] + ' / ' + nt[1];
+    }
+
+    if (mode === 'side') {
+      var wx = w * .12;
+      s += '<line x1="' + wx + '" y1="' + (-h / 2) + '" x2="' + wx + '" y2="' + (h / 2) + '" stroke="' + WHITE + '" stroke-opacity=".35"/>';
+      var dep = function (k) {
+        var base = { haL: 0, haR: 0, ftL: 0, ftR: 0, elL: 6, elR: 6, knL: 8, knR: 8, shL: 7, shR: 7, hiL: 10, hiR: 10, P: 10, S: 7, neck: 8, head: 10 }[k];
+        if (k === 'haL' || k === 'haR' || k === 'ftL' || k === 'ftR') { var nm2 = { haL: 'hL', haR: 'hR', ftL: 'fL', ftR: 'fR' }[k]; base += Math.sin(Math.PI * L[nm2][2]) * 4; }
+        if (k === 'hiL' || k === 'hiR' || k === 'P') base += Math.sin(Math.PI * L.prog) * (L.active[0] === 'h' ? 3 : -1.5);
+        return base;
+      };
+      var JS = {}; Object.keys(J).forEach(function (k) { if (J[k] && J[k].length === 2) JS[k] = [dep(k) == null ? 6 : dep(k), J[k][1]]; });
+      var XS = function (p) { return wx + p[0]; };
+      for (var r = Math.floor((cy - 40) / D); r <= Math.ceil((cy + 40) / D); r++) {
+        ORDER.forEach(function (nm3) { var yy = BASE[nm3][1] + D * r; s += '<path d="M' + wx + ' ' + f(Y([0, yy + 1.2])) + 'l1.6 1.4l-1.6 .4z" fill="none" stroke="' + WHITE + '" stroke-opacity=".38"/>'; });
+      }
+      s += figure(JS, XS, Y, MINT, false, 1);
+      s += '<g fill="' + WHITE + '" font-family="DM Mono, monospace" font-size="1.7" fill-opacity=".55"><text x="' + f(-w / 2 + 6) + '" y="' + f(h / 2 - 4) + '">FRONT</text><text x="' + (wx + 2) + '" y="' + f(h / 2 - 4) + '">SIDE</text></g>';
+      var hipOff = dep('P');
+      s += '<g fill="' + WHITE + '" font-family="DM Mono, monospace" font-size="1.7"><line x1="' + wx + '" y1="' + f(Y(J.P) + 6) + '" x2="' + f(wx + hipOff) + '" y2="' + f(Y(J.P) + 6) + '" stroke="' + WHITE + '"/><text x="' + f(wx + hipOff + 2) + '" y="' + f(Y(J.P) + 6.8) + '">HIPS ' + Math.round(hipOff * 3) + ' CM OFF THE WALL</text></g>';
+    }
+    svg.innerHTML = s; fixStroke(svg);
+    return L;
+  }
+
+  var heroSvg = document.getElementById('hero'), anSvg = document.getElementById('an'), cmpSvg = document.getElementById('cmp');
+  var sport = 'climb', cmpMode = 'friend';
+  document.querySelectorAll('[data-sport]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      sport = b.dataset.sport; trail = [];
+      document.querySelectorAll('[data-sport]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.getElementById('hero-tl').textContent = sport === 'climb' ? 'Board / 40°' : 'Open mat / round 3';
+      document.getElementById('hero-br').textContent = sport === 'climb' ? 'Climb' : 'Roll';
+      if (still) frame(1.6);
+    });
+  });
+  document.querySelectorAll('[data-cmp]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      cmpMode = b.dataset.cmp;
+      document.querySelectorAll('[data-cmp]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.getElementById('cmp-bl').innerHTML = cmpMode === 'friend' ? '<span style="color:var(--line)">——</span> You &nbsp; <span class="q">- - - Sam</span>' : '<span class="q">Same move, two cameras</span>';
+      document.getElementById('cmp-read').innerHTML = cmpMode === 'friend'
+        ? '<div><span class="m q">Hips</span><b>4 cm lower</b><span class="q">than Sam through the crux</span></div><div><span class="m q">Reach</span><b>0.3 s later</b><span class="q">on every hand move</span></div><div><span class="m q">Feet</span><b>2 of 4</b><span class="q">placed as quietly as Sam\'s</span></div>'
+        : '<div><span class="m q">Hips</span><b>30 cm out</b><span class="q">from the wall at the furthest reach</span></div><div><span class="m q">Arms</span><b>162°</b><span class="q">right elbow on the lock-off</span></div><div><span class="m q">Feet</span><b>4 cm</b><span class="q">of lift before each placement</span></div>';
+      if (still) frame(1.6);
+    });
+  });
+
+  function frame(t) {
+    if (sport === 'climb') { var L = drawClimb(heroSvg, t, 'hero', 'hero'); document.getElementById('hero-bl').textContent = 'Tracking 15 points'; }
+    else { document.getElementById('hero-bl').textContent = drawRoll(heroSvg, t); }
+    document.getElementById('hero-tc').textContent = tc(t);
+    drawClimb(anSvg, t + 2.3, 'an', 'an');
+    document.getElementById('an-tc').textContent = tc(t + 42);
+    drawClimb(cmpSvg, t + 1.1, cmpMode, 'cmp');
+  }
+  if (still) { frame(1.6); return; }
+  var t0 = performance.now();
+  (function loop(now) { frame((now - t0) / 1000); requestAnimationFrame(loop); })(t0);
+})();
+</script>

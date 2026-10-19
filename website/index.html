@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>grip</title>
+<meta name="description" content="Film a climb. Grip tracks your body and sends back the three things to fix, each pinned to the second it happened.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400&family=DM+Mono:wght@400&display=swap">
+<style>
+/* grip site v8 (19 Oct 2026): Elliot asked for more interactive, more sell, fewer forced line breaks,
+   and a 3D phone you can play with that walks through the app. One phone, live HTML inside, sticky through the walkthrough.
+   Blue only for the wordmark, the crimp mark and the tracked body. */
+:root { --bg:#000; --tile:#0D0E0D; --tile2:#161717; --white:#F3F3F0; --line:#4A74FF;
+  --text:rgba(243,243,240,.95); --quiet:rgba(243,243,240,.56); --faint:rgba(243,243,240,.24); --edge:rgba(243,243,240,.1);
+  --sans:"Host Grotesk","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,0,1); color-scheme:dark; }
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font:400 18px/1.45 var(--sans);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,p{margin:0;font-weight:400}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.q{color:var(--quiet)}
+.sr{position:absolute;left:-9999px}
+.pad{padding-inline:32px}
+@media (max-width:600px){.pad{padding-inline:16px}}
+h1,h2{text-wrap:balance}
+h2{font-size:clamp(36px,5.4vw,88px);line-height:.98;letter-spacing:-.04em}
+.lead{font-size:clamp(18px,1.6vw,22px);color:var(--quiet);max-width:36em;text-wrap:pretty}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding-inline:26px;border-radius:999px;background:var(--white);color:#000;text-decoration:none;font-size:17px;transition:transform .25s var(--ease),background .25s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1px var(--faint)}
+.btn.ghost:hover{box-shadow:inset 0 0 0 1px var(--white)}
+:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+
+/* header */
+.top{position:fixed;inset:0 0 auto;z-index:30;display:flex;justify-content:space-between;align-items:center;height:72px;transition:background .3s}
+.top.solid{background:rgba(0,0,0,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.logo{display:block;height:20px;color:var(--line)}
+.logo svg{height:100%;width:auto;display:block}
+.top nav{display:flex;align-items:center;gap:28px;font-size:16px}
+.top nav a{text-decoration:none;color:var(--quiet);transition:color .2s}
+.top nav a:hover{color:var(--text)}
+.top .btn{height:40px;padding-inline:18px;font-size:15px;color:#000}
+@media (max-width:760px){.top nav a:not(.btn){display:none}.top{height:60px}}
+
+/* the walkthrough: copy scrolls on the left, one phone stays put on the right */
+.walk{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);position:relative}
+.col{position:relative;z-index:2}
+.stagewrap{position:sticky;top:0;height:100vh;height:100svh;display:grid;place-items:center}
+.hero{min-height:100vh;min-height:100svh;display:grid;align-content:center;gap:28px;padding-block:110px 60px}
+h1{font-size:clamp(42px,6.3vw,116px);line-height:.94;letter-spacing:-.045em}
+h1 span{display:block;white-space:nowrap}
+.hero .lead{color:var(--text);opacity:.8;max-width:30em}
+.ctas{display:flex;gap:10px;flex-wrap:wrap}
+.facts{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.facts span{font-size:14px;color:var(--quiet);padding:8px 14px;border-radius:999px;background:var(--tile)}
+.what{min-height:80vh;display:grid;align-content:center;padding-block:60px}
+.what p{font-size:clamp(24px,2.5vw,36px);line-height:1.18;letter-spacing:-.025em;max-width:22em;text-wrap:pretty}
+.what p em{font-style:normal;color:var(--quiet)}
+.step{min-height:88vh;display:grid;align-content:center;gap:20px;padding-block:60px;opacity:.28;transition:opacity .6s var(--ease)}
+.step.on{opacity:1}
+.step .tag{font-size:15px;color:var(--quiet);display:flex;align-items:center;gap:10px}
+.step .tag i{width:8px;height:8px;border-radius:50%;background:var(--faint);transition:background .4s}
+.step.on .tag i{background:var(--white)}
+.step h2{max-width:none}
+.step .lead{max-width:28em}
+.step .try{font-size:15px;color:var(--quiet);margin-top:4px}
+.dots{position:absolute;right:28px;top:50%;transform:translateY(-50%);display:grid;gap:12px;z-index:3}
+.dots button{width:8px;height:8px;border-radius:50%;background:var(--faint);transition:background .3s,transform .3s}
+.dots button.on{background:var(--white);transform:scale(1.4)}
+.hint{position:absolute;bottom:28px;left:0;right:0;text-align:center;font-size:14px;color:var(--quiet);transition:opacity .6s}
+
+@media (max-width:900px){
+  .walk{grid-template-columns:1fr}
+  .walk{padding-top:60px}
+  .stagewrap{grid-row:1;top:60px;height:48vh;height:48svh;z-index:4;background:var(--bg)}
+  .stagewrap::after{content:"";position:absolute;left:0;right:0;bottom:-36px;height:36px;background:linear-gradient(var(--bg),transparent);pointer-events:none}
+  .col{grid-row:2}
+  .hero{min-height:0;padding-block:28px 40px;gap:20px}
+  h1{font-size:clamp(36px,10.6vw,72px)}
+  .what{min-height:0;padding-block:40px 20px}
+  .step{min-height:62vh;align-content:start;padding-block:56px 40px}
+  .dots{display:none}
+  .hint{bottom:6px;font-size:13px}
+}
+
+/* the phone: CSS 3D shell, live HTML screen */
+.stage{position:absolute;left:50%;top:50%;margin:-310px 0 0 -150px;width:300px;height:620px;perspective:1600px;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none;transform:scale(var(--s,1));transform-origin:center}
+.stage.drag{cursor:grabbing}
+.phone{position:relative;width:100%;height:100%;transform-style:preserve-3d;will-change:transform}
+.phone .layer{position:absolute;inset:0;border-radius:52px;background:#2a2b2b}
+.phone .layer.rim{background:#3a3b3b}
+.face{position:absolute;inset:0;border-radius:52px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.front{background:#050505;padding:11px;transform:translateZ(7px)}
+.back{background:#151616;transform:rotateY(180deg) translateZ(7px);display:grid;place-items:center}
+.back svg{width:96px;height:auto;color:var(--line)}
+.back .cam{position:absolute;top:22px;left:22px;width:92px;height:92px;border-radius:28px;background:#0c0c0c}
+.back .cam::before,.back .cam::after{content:"";position:absolute;width:32px;height:32px;border-radius:50%;background:#000;box-shadow:0 0 0 3px #222;left:12px;top:12px}
+.back .cam::after{top:auto;bottom:12px;left:48px}
+.btnside{position:absolute;width:6px;border-radius:3px;background:#3a3b3b}
+.screen{position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;background:#000;font-size:13px;letter-spacing:-.005em;line-height:1.3}
+.island{position:absolute;top:10px;left:50%;width:92px;height:27px;margin-left:-46px;border-radius:20px;background:#000;z-index:9}
+.status{position:absolute;top:0;left:0;right:0;height:46px;display:flex;justify-content:space-between;align-items:center;padding:4px 26px 0;font:500 13px/1 var(--sans);z-index:8;pointer-events:none}
+.status b{font-weight:400}
+.status .bat{width:22px;height:11px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(243,243,240,.5);position:relative}
+.status .bat::after{content:"";position:absolute;inset:2px 6px 2px 2px;border-radius:1px;background:var(--white)}
+.scr{position:absolute;inset:0;padding:50px 14px 74px;opacity:0;visibility:hidden;transform:translateX(18px);transition:opacity .45s var(--ease),transform .45s var(--ease),visibility 0s .45s;overflow:hidden}
+.scr.on{opacity:1;visibility:visible;transform:none;transition:opacity .45s var(--ease),transform .45s var(--ease),visibility 0s}
+.scr.full{padding:0}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:70px;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 10px 18px;background:#0a0b0b;z-index:7;transition:transform .4s var(--ease)}
+.tabs.hide{transform:translateY(100%)}
+.tabs button{display:grid;justify-items:center;gap:4px;font-size:10.5px;color:var(--faint)}
+.tabs button.on{color:var(--text)}
+.tabs svg{width:22px;height:22px}
+.apphead{display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px}
+.apphead h3{font-size:24px;letter-spacing:-.03em}
+.pill{display:inline-flex;align-items:center;gap:6px;height:30px;padding-inline:12px;border-radius:999px;background:var(--tile2);font-size:12.5px;transition:background .2s,color .2s,transform .15s}
+.pill:active{transform:scale(.95)}
+.pill.w{background:var(--white);color:#000}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.02em}
+
+/* review screen */
+.vid{position:relative;height:250px;border-radius:16px;overflow:hidden;background:#0a0b0b}
+.vid svg{position:absolute;inset:0;width:100%;height:100%}
+.vid .tcx{position:absolute;left:10px;bottom:9px;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.6)}
+.vid .pin{position:absolute;right:10px;top:10px;max-width:70%;padding:6px 9px;border-radius:9px;background:rgba(243,243,240,.94);color:#000;font-size:12px;transform:translateY(-6px);opacity:0;transition:opacity .3s,transform .3s}
+.vid .pin.on{opacity:1;transform:none}
+.bar{position:relative;height:22px;margin:8px 2px 10px;cursor:pointer}
+.bar::before{content:"";position:absolute;left:0;right:0;top:10px;height:3px;border-radius:2px;background:var(--tile2)}
+.bar .fill{position:absolute;left:0;top:10px;height:3px;border-radius:2px;background:var(--white);width:0}
+.bar .mk{position:absolute;top:5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#000;box-shadow:inset 0 0 0 2px var(--white)}
+.nt{display:grid;grid-template-columns:34px 1fr;gap:4px 8px;padding:10px 11px;border-radius:13px;background:var(--tile);margin-bottom:6px;text-align:left;width:100%;transition:background .3s}
+.nt.on{background:var(--tile2)}
+.nt .mono{color:var(--quiet);padding-top:2px}
+.nt b{font-weight:400;font-size:14px}
+.nt .pt{grid-column:2;color:var(--quiet);font-size:11.5px}
+.rate{grid-column:2;display:none;gap:6px;margin-top:6px}
+.nt.on .rate{display:flex}
+.rate .pill{height:28px}
+.scr.ratefocus .rate .pill{animation:nudge 1.6s var(--ease) infinite}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(243,243,240,0)}40%{box-shadow:0 0 0 4px rgba(243,243,240,.22)}}
+
+/* camera screen */
+.cam svg{position:absolute;inset:0;width:100%;height:100%;transition:transform .5s var(--ease)}
+.cam .guide{position:absolute;left:12%;right:12%;top:19%;bottom:24%;border:2px dashed rgba(243,243,240,.8);border-radius:10px;transition:opacity .3s}
+.cam .gtxt{position:absolute;left:0;right:0;top:calc(19% - 24px);text-align:center;font-size:12px;color:var(--white)}
+.cam .lens{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(0,0,0,.55)}
+.cam .lens button{width:36px;height:28px;border-radius:999px;font-size:12px;color:var(--quiet)}
+.cam .lens button.on{background:rgba(243,243,240,.18);color:var(--white)}
+.rec{position:absolute;left:50%;bottom:34px;width:70px;height:70px;margin-left:-35px;border-radius:50%;box-shadow:inset 0 0 0 4px var(--white)}
+.rec::after{content:"";position:absolute;inset:9px;border-radius:50%;background:#E0443E;transition:inset .3s var(--ease),border-radius .3s}
+.rec.on::after{inset:22px;border-radius:6px}
+.cam .timer{position:absolute;top:52px;left:50%;transform:translateX(-50%);padding:4px 10px;border-radius:7px;background:rgba(0,0,0,.5)}
+.cam .timer.on{background:#E0443E}
+.cam .x{position:absolute;top:50px;left:16px;font-size:13px}
+
+/* tag screen */
+.fld{margin-bottom:14px}
+.fld>span{display:block;color:var(--quiet);font-size:12px;margin-bottom:7px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.cols{display:flex;gap:9px}
+.cols button{width:28px;height:28px;border-radius:50%;transition:transform .2s;box-shadow:0 0 0 0 var(--white)}
+.cols button.on{box-shadow:0 0 0 2px #000,0 0 0 4px var(--white)}
+.grade{display:flex;align-items:center;gap:14px}
+.grade b{font-weight:400;font-size:30px;letter-spacing:-.03em;min-width:2.2em;text-align:center}
+.grade button{width:38px;height:38px;border-radius:50%;background:var(--tile2);font-size:20px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);padding:3px;border-radius:12px;background:var(--tile2)}
+.seg button{height:32px;border-radius:9px;font-size:12.5px;color:var(--quiet)}
+.seg button.on{background:var(--white);color:#000}
+.go{width:100%;height:46px;border-radius:999px;background:var(--white);color:#000;margin-top:6px;font-size:14px;position:relative;overflow:hidden}
+.go i{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(0,0,0,.14)}
+
+/* sets + gyms screens */
+.feed{display:grid;gap:8px}
+.fc{display:grid;grid-template-columns:76px 1fr;gap:11px;padding:8px;border-radius:14px;background:var(--tile);align-items:center}
+.fc svg{width:76px;height:92px;border-radius:9px;display:block}
+.fc b{font-weight:400;font-size:14px;display:block}
+.fc .q{font-size:12px}
+.fc .new{display:inline-block;margin-top:7px;font-size:11px;padding:3px 8px;border-radius:999px;background:var(--tile2)}
+.gl{display:grid;gap:6px}
+.gl div{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:13px;background:var(--tile)}
+.gl small{display:block;color:var(--quiet);font-size:11.5px}
+
+/* sections after the walkthrough */
+section{padding-block:clamp(110px,14vw,200px) 0}
+.reveal>*{opacity:0;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal.in>*{opacity:1;transform:none}
+.reveal.in>*:nth-child(2){transition-delay:.08s}.reveal.in>*:nth-child(3){transition-delay:.16s}.reveal.in>*:nth-child(4){transition-delay:.24s}
+.head{display:grid;gap:22px;margin-bottom:48px}
+
+/* gyms */
+.sets{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.track{display:flex;gap:12px;width:max-content;animation:drift 70s linear infinite}
+.sets:hover .track{animation-play-state:paused}
+.card{width:clamp(210px,21vw,290px);flex:none;border-radius:14px;overflow:hidden;background:var(--tile);transition:transform .4s var(--ease)}
+.card:hover{transform:translateY(-6px)}
+.card svg{display:block;width:100%;aspect-ratio:4/5}
+.card .cap{display:flex;justify-content:space-between;gap:10px;padding:14px 16px;font-size:15px}
+.card .cap .q{white-space:nowrap}
+@keyframes drift{to{transform:translateX(-50%)}}
+.follow{margin-top:40px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end}
+.follow .chips{gap:8px}
+.follow .pill{height:42px;padding-inline:18px;font-size:16px;background:var(--tile)}
+.follow .pill.w{background:var(--white)}
+.count{font-size:16px;color:var(--quiet);text-align:right;max-width:18em}
+.count b{font-weight:400;color:var(--text)}
+@media (max-width:760px){.follow{grid-template-columns:1fr}.count{text-align:left}}
+
+/* filming: the viewfinder you can set up */
+.vfwrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px}
+.vf{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:#0a0b0b;perspective:900px}
+.vf svg{position:absolute;inset:0;width:100%;height:100%;transition:transform .7s var(--ease)}
+.vf .guide{position:absolute;left:18%;right:18%;top:10%;bottom:10%;border:2px dashed rgba(243,243,240,.8);border-radius:12px}
+.vf .verdict{position:absolute;left:16px;bottom:16px;right:16px;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:16px}
+.vf .verdict i{flex:none;width:10px;height:10px;border-radius:50%;background:#E0443E;transition:background .3s}
+.vf .verdict.ok i{background:#3FAE5A}
+.vf .zoom{position:absolute;top:16px;left:16px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.6);font-size:14px}
+.ctl{display:grid;gap:12px;align-content:start}
+.ctl .box{background:var(--tile);border-radius:18px;padding:22px;display:grid;gap:14px}
+.ctl .box>span{color:var(--quiet);font-size:15px}
+.ctl .seg{background:var(--tile2);border-radius:14px;padding:4px}
+.ctl .seg button{height:46px;font-size:16px;border-radius:11px}
+.ctl .seg.two{grid-template-columns:1fr 1fr}
+.ctl .tip{color:var(--quiet);font-size:16px}
+.ctl .tip b{font-weight:400;color:var(--text)}
+@media (max-width:860px){.vfwrap{grid-template-columns:1fr}}
+
+/* coaches */
+.coach{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.ctile{background:var(--tile);border-radius:18px;padding:26px;display:grid;gap:22px;align-content:start}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stats div{background:var(--tile);border-radius:18px;padding:22px;display:grid;gap:30px}
+.stats b{font-weight:400;font-size:clamp(40px,4.6vw,76px);letter-spacing:-.05em;line-height:.9}
+.stats span{color:var(--quiet);font-size:15px}
+.inbox{display:grid;gap:8px}
+.ci{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:14px;background:var(--tile2)}
+.ci .av{width:44px;height:44px;border-radius:50%;background:#222;display:grid;place-items:center;font-size:15px}
+.ci b{font-weight:400;display:block}
+.ci small{color:var(--quiet);font-size:14px;display:block}
+.ci .pill{height:36px;padding-inline:14px;font-size:14px;background:var(--white);color:#000}
+.ci .pill.done{background:transparent;color:var(--quiet);box-shadow:inset 0 0 0 1px var(--faint)}
+.book{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px;border-radius:14px;background:var(--tile2);font-size:16px}
+@media (max-width:860px){.coach{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr 1fr}.stats div{padding:16px;gap:18px}.stats span{font-size:13px}}
+
+/* real clip: a video slot that shows the tracked climber until Elliot's footage lands */
+.reel{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#0a0b0b}
+.reel svg,.reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.reel .lbl{position:absolute;left:16px;bottom:16px;display:flex;gap:8px;flex-wrap:wrap}
+.reel .lbl span{padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.7);font-size:15px}
+.reel .tc2{position:absolute;right:16px;top:16px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.6)}
+@media (max-width:600px){.reel{aspect-ratio:1/1}}
+.reel{max-height:78vh;width:100%}
+
+/* better than the eye: same clip, your eye vs Grip */
+.eyebox{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px}
+.eyev{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:#0a0b0b;cursor:pointer}
+.eyev svg{position:absolute;inset:0;width:100%;height:100%;transition:filter .4s}
+.eyev.blur svg{filter:blur(1.6px)}
+.eyev .lbl{position:absolute;left:16px;bottom:16px;right:16px;display:flex;gap:8px;flex-wrap:wrap}
+.eyev .lbl span{padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.72);font-size:15px}
+.eyev .soon{position:absolute;left:16px;top:16px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.6);font-size:13px}
+@media (max-width:600px){.eyev .soon{top:auto;bottom:62px}}
+.eyev .tc2{position:absolute;right:16px;top:16px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.6)}
+.eyectl{background:var(--tile);border-radius:18px;padding:22px;display:grid;gap:18px;align-content:start}
+.eyectl .seg{background:var(--tile2);border-radius:14px;padding:4px}
+.eyectl .seg button{height:46px;font-size:16px;border-radius:11px}
+.eyectl .seg.two{grid-template-columns:1fr 1fr}
+.scrub{width:100%;accent-color:var(--white);height:28px}
+.read{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.read div{background:var(--tile2);border-radius:14px;padding:14px;display:grid;gap:10px}
+.read span{color:var(--quiet);font-size:14px}
+.read b{font-weight:400;font-size:clamp(28px,2.6vw,40px);letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.eyectl .cap{color:var(--quiet);font-size:16px;min-height:3em}
+.four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+.four div{background:var(--tile);border-radius:18px;padding:22px;display:grid;gap:40px;align-content:space-between;min-height:220px}
+.four b{font-weight:400;font-size:clamp(24px,2.2vw,32px);letter-spacing:-.03em;line-height:1.05}
+.four p{color:var(--quiet);font-size:16px}
+@media (max-width:1000px){.four{grid-template-columns:1fr 1fr}}
+@media (max-width:860px){.eyebox{grid-template-columns:1fr}.eyev{aspect-ratio:1/1}}
+@media (max-width:520px){.four{grid-template-columns:1fr}.four div{min-height:0;gap:18px}}
+
+/* training: plan from your notes, plus the log */
+.trainbox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.ttile{background:var(--tile);border-radius:18px;padding:24px;display:grid;gap:18px;align-content:start}
+.ttile .seg{background:var(--tile2);border-radius:14px;padding:4px}
+.ttile .seg button{height:44px;font-size:15px;border-radius:11px}
+.plan h3{font-size:clamp(28px,2.8vw,40px);letter-spacing:-.035em;line-height:1}
+.because{display:inline-flex;gap:8px;align-items:center;font-size:15px;color:var(--quiet)}
+.because i{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none}
+.drills{display:grid;gap:6px}
+.drill{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:14px;border-radius:14px;background:var(--tile2);text-align:left;width:100%;font-size:16px}
+.drill .ck{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--faint);display:grid;place-items:center;transition:background .2s}
+.drill.done .ck{background:var(--white);box-shadow:none}
+.drill.done .ck::after{content:"";width:8px;height:5px;border:2px solid #000;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.drill.done span:nth-child(2){color:var(--quiet);text-decoration:line-through}
+.drill small{color:var(--quiet);font-size:14px;font-family:var(--mono)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:150px}
+.week div{display:grid;gap:4px;align-content:end;height:100%}
+.week i{display:block;border-radius:6px;background:var(--tile2)}
+.week i.c{background:var(--white)}.week i.j{background:rgba(243,243,240,.55)}.week i.x{background:rgba(243,243,240,.3)}
+.week span{font-size:12px;color:var(--quiet);text-align:center;font-family:var(--mono)}
+.keyrow{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--quiet)}
+.keyrow i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.totals div{background:var(--tile2);border-radius:14px;padding:14px;display:grid;gap:8px}
+.totals b{font-weight:400;font-size:clamp(24px,2.2vw,32px);letter-spacing:-.03em;line-height:1}
+.totals span{color:var(--quiet);font-size:13px}
+.health{justify-self:start;font-size:14px;padding:8px 14px;border-radius:999px;background:var(--tile2);color:var(--quiet)}
+@media (max-width:860px){.trainbox{grid-template-columns:1fr}}
+
+/* phone: train screen */
+.tcard{padding:14px;border-radius:16px;background:var(--tile);margin-bottom:8px}
+.tcard h4{margin:0 0 4px;font-weight:400;font-size:19px;letter-spacing:-.02em}
+.tcard .q{font-size:12px}
+.pdr{display:grid;grid-template-columns:20px 1fr auto;gap:9px;align-items:center;padding:10px 11px;border-radius:12px;background:var(--tile);margin-bottom:5px;width:100%;text-align:left;font-size:13px}
+.pdr .ck{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--faint)}
+.pdr.done .ck{background:var(--white);box-shadow:none}
+.pdr.done span:nth-child(2){color:var(--quiet);text-decoration:line-through}
+.pdr small{color:var(--quiet);font-family:var(--mono);font-size:10.5px}
+
+/* pricing: three cards and where the money goes */
+.bill{display:inline-grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:var(--tile);margin-bottom:12px}
+.bill button{height:44px;padding-inline:20px;border-radius:11px;font-size:15px;color:var(--quiet)}
+.bill button.on{background:var(--white);color:#000}
+.prices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pc{background:var(--tile);border-radius:18px;padding:26px;display:grid;gap:22px;align-content:start}
+.pc.main{background:var(--white);color:#000}
+.pc.main .q,.pc.main li::before{color:rgba(0,0,0,.55)}
+.pc h3{font-size:22px;letter-spacing:-.02em}
+.pc .amt{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pc .amt b{font-weight:400;font-size:clamp(44px,4.6vw,68px);letter-spacing:-.05em;line-height:.9}
+.pc ul{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:16px}
+.pc li{display:grid;grid-template-columns:18px 1fr;gap:8px}
+.pc li::before{content:"✓";color:var(--quiet)}
+.pc .btn{justify-self:start}
+.pc.main .btn{background:#000;color:var(--white)}
+.where{margin-top:12px;background:var(--tile);border-radius:18px;padding:26px;display:grid;gap:20px}
+.where h3{font-size:clamp(22px,2vw,28px);letter-spacing:-.025em}
+.stack{display:flex;height:56px;border-radius:12px;overflow:hidden;gap:3px}
+.stack i{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.legend div{display:grid;gap:6px}
+.legend b{font-weight:400;font-size:clamp(24px,2.2vw,32px);letter-spacing:-.03em;line-height:1}
+.legend span{color:var(--quiet);font-size:15px}
+.legend span i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+@media (max-width:900px){.prices{grid-template-columns:1fr}.legend{grid-template-columns:1fr 1fr}}
+
+.found{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;padding:22px 26px;border-radius:18px;background:var(--tile);box-shadow:inset 0 0 0 1.5px var(--line);margin-bottom:12px}
+.found b{display:block;font-weight:400;font-size:clamp(20px,1.9vw,26px);letter-spacing:-.025em;margin-bottom:6px}
+.found span{color:var(--quiet);font-size:16px}
+
+/* sports: climbing now, the rest coming */
+.sports{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}
+.sp{position:relative;background:var(--tile);border-radius:18px;padding:24px;min-height:320px;display:grid;align-content:space-between;gap:24px;overflow:hidden}
+.sp b{font-weight:400;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.04em;line-height:1}
+.sp p{color:var(--quiet);font-size:16px;max-width:24em}
+.sp .st{justify-self:start;padding:7px 13px;border-radius:999px;background:var(--tile2);font-size:14px;color:var(--quiet)}
+.sp.live .st{background:var(--white);color:#000}
+.sp svg{width:100%;height:230px}
+@media (max-width:860px){.sports{grid-template-columns:1fr}.sp{min-height:0}}
+
+.form{display:flex;gap:8px;flex-wrap:wrap;max-width:460px;width:100%}
+.form input{flex:1 1 200px;min-width:0;height:54px;font:inherit;font-size:17px;color:var(--text);background:var(--tile);border:0;border-radius:999px;padding-inline:22px}
+.form input::placeholder{color:var(--faint)}
+.form input:focus{outline:2px solid var(--white);outline-offset:0}
+.note{display:block;min-height:1.4em;margin-top:10px;font-size:15px;color:var(--quiet)}
+
+.closer{min-height:90vh;min-height:90svh;display:grid;align-content:center;justify-items:center;text-align:center;gap:30px;padding-bottom:60px}
+.closer .mark{width:120px;color:var(--line)}
+.closer h2{font-size:clamp(40px,7vw,120px)}
+.closer .form{justify-content:center}
+footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:30px;font-size:15px;color:var(--quiet)}
+
+@media (prefers-reduced-motion:reduce){
+  .reveal>*{opacity:1;transform:none;transition:none}
+  .track{animation:none}
+  .scr,.step{transition:none}
+}
+</style>
+
+<header class="top pad" id="top">
+  <a class="logo" href="#hero" aria-label="grip, back to top"><svg xmlns="http://www.w3.org/2000/svg" viewBox="32 -787 1660 1019" role="img" aria-label="grip"><path fill="currentColor" d="M304 232Q239 232 185.0 209.5Q131 187 94.5 144.5Q58 102 48 41H137Q151 91 196.5 122.5Q242 154 303 154Q351 154 389.0 133.5Q427 113 449.5 72.5Q472 32 472 -27V-98Q456 -71 429.5 -46.5Q403 -22 366.5 -6.5Q330 9 282 9Q212 9 155.0 -25.0Q98 -59 65.0 -117.5Q32 -176 32 -250Q32 -325 65.0 -383.0Q98 -441 155.0 -474.5Q212 -508 282 -508Q347 -508 396.5 -479.0Q446 -450 472 -410V-496H562V-30Q562 52 528.5 110.5Q495 169 436.5 200.5Q378 232 304 232ZM296 -69Q346 -69 385.0 -92.0Q424 -115 446.0 -156.0Q468 -197 468 -250Q468 -304 446.0 -344.5Q424 -385 385.0 -407.5Q346 -430 296 -430Q247 -430 208.0 -407.5Q169 -385 146.5 -344.5Q124 -304 124 -250Q124 -198 146.5 -156.5Q169 -115 208.0 -92.0Q247 -69 296 -69ZM650 0V-496H740V-418Q757 -457 786.0 -478.5Q815 -500 857 -500H931V-416H848Q816 -416 791.5 -398.0Q767 -380 753.5 -340.5Q740 -301 740 -236V0ZM1001 0V-496H1091V0ZM1177 220V-496H1267V-415Q1291 -451 1335.0 -479.5Q1379 -508 1447 -508Q1520 -508 1575.0 -474.0Q1630 -440 1661.0 -381.0Q1692 -322 1692 -247Q1692 -172 1661.0 -113.5Q1630 -55 1575.0 -21.5Q1520 12 1446 12Q1385 12 1339.0 -12.5Q1293 -37 1267 -81V220ZM1434 -66Q1483 -66 1520.5 -89.0Q1558 -112 1579.5 -153.0Q1601 -194 1601 -248Q1601 -302 1579.5 -343.0Q1558 -384 1520.5 -407.0Q1483 -430 1434 -430Q1386 -430 1348.5 -407.0Q1311 -384 1290.0 -343.0Q1269 -302 1269 -248Q1269 -194 1290.0 -153.0Q1311 -112 1348.5 -89.0Q1386 -66 1434 -66Z"/><path fill="none" stroke="currentColor" stroke-width="90" stroke-linecap="round" d="M962 -636.0V-658.0a84 84 0 0 1 168 0V-636.0"/></svg></a>
+  <nav><a href="#how">How it works</a><a href="#gyms">Gyms</a><a href="#coaches">Coaches</a><a href="#pricing">Pricing</a><a class="btn" href="#join">Join the beta</a></nav>
+</header>
+
+<div class="walk" id="hero">
+  <div class="col pad">
+    <div class="hero">
+      <h1><span>Film a climb.</span><span>Get three notes.</span></h1>
+      <p class="lead">Prop your phone up and climb. Grip tracks your body frame by frame and sends back the three things to fix, each pinned to the second it happened.</p>
+      <div class="ctas"><a class="btn" href="#join">Join the beta</a><a class="btn ghost" href="#how">See how it works</a></div>
+      <div class="facts"><span>Free while in beta</span><span>iPhone first</span><span>Every gym in London</span></div>
+    </div>
+    <div class="what" id="how">
+      <p>Most climbers film everything and watch nothing back. <em>Grip watches it for you. It finds the moments that cost you the send and tells you what to try next session, in plain words.</em></p>
+    </div>
+    <div class="step" data-scr="film" data-pose="-16,6">
+      <span class="tag"><i></i>Film</span>
+      <h2>Prop it up and climb.</h2>
+      <p class="lead">No selfie stick, no friend holding it. Lean the phone on your bag at 0.5×, line the start and top hold up inside the box, and go.</p>
+      <p class="try">Tap the record button on the phone.</p>
+    </div>
+    <div class="step" data-scr="tag" data-pose="14,-4">
+      <span class="tag"><i></i>Tag</span>
+      <h2>Say where you were.</h2>
+      <p class="lead">Gym, colour, grade and whether you sent it. Four taps, so your climbs line up by wall and you can see a grade come together over a month.</p>
+      <p class="try">Pick a colour, then press Get my notes.</p>
+    </div>
+    <div class="step" data-scr="review" data-pose="-10,4">
+      <span class="tag"><i></i>Notes</span>
+      <h2>Three notes come back.</h2>
+      <p class="lead">Not a score, not forty stats. The three moments worth fixing, each one on the frame it happened, with the joint angles that show why.</p>
+      <p class="try">Tap a note to jump the video to it.</p>
+    </div>
+    <div class="step" data-scr="rate" data-pose="12,6">
+      <span class="tag"><i></i>Rate</span>
+      <h2>Tell it if it helped.</h2>
+      <p class="lead">Every note has two buttons. What you tap shapes the next review, so after a few sessions the notes sound like your coach, not a textbook.</p>
+      <p class="try">Try Helped or Not for me.</p>
+    </div>
+    <div class="step" data-scr="train" data-pose="10,-4">
+      <span class="tag"><i></i>Train</span>
+      <h2>Train on what it found.</h2>
+      <p class="lead">Your notes turn into drills. Keep missing the heel? Tomorrow's session has heel-hook drills on the board, a 4×4 on the overhang and hamstring work to back it up.</p>
+      <p class="try">Tick off a drill, then press Start.</p>
+    </div>
+    <div class="step" data-scr="sets" data-pose="-14,-2">
+      <span class="tag"><i></i>New sets</span>
+      <h2>Know when your wall resets.</h2>
+      <p class="lead">Follow your gyms and Grip pings you when a new set goes up, with a photo of the wall, so you turn up on the right night.</p>
+      <p class="try">Switch tabs at the bottom of the phone.</p>
+    </div>
+  </div>
+
+  <div class="stagewrap" aria-label="A working preview of the Grip app">
+    <div class="stage" id="stage">
+      <div class="phone" id="phone">
+        <!-- thickness: stacked layers between front and back -->
+        <div class="layer" style="transform:translateZ(-6px)"></div><div class="layer" style="transform:translateZ(-4.5px)"></div><div class="layer rim" style="transform:translateZ(-3px)"></div><div class="layer" style="transform:translateZ(-1.5px)"></div><div class="layer rim" style="transform:translateZ(0)"></div><div class="layer" style="transform:translateZ(1.5px)"></div><div class="layer rim" style="transform:translateZ(3px)"></div><div class="layer" style="transform:translateZ(4.5px)"></div><div class="layer" style="transform:translateZ(6px)"></div>
+        <i class="btnside" style="left:-3px;top:120px;height:30px;transform:translateZ(0) rotateY(90deg)"></i>
+        <div class="face back"><span class="cam"></span><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="6 36.5 88 34"><path fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M10 68H90M17 68V54a7 7 0 0 1 14 0V68M35 68V46a7 7 0 0 1 14 0V68M53 68V46a7 7 0 0 1 14 0V68M71 68V54a7 7 0 0 1 14 0V68"/></svg></div>
+        <div class="face front">
+          <div class="screen" id="screen" data-ui>
+            <span class="island"></span>
+            <div class="status"><b id="clock">9:41</b><span class="bat"></span></div>
+
+            <div class="scr" data-s="review" id="s-review">
+              <div class="apphead"><div><h3>The Castle</h3><span class="q mono">BLUE V6 / CAVE / NOT YET</span></div><button class="pill" data-go="film">Film</button></div>
+              <div class="vid"><svg id="pv"></svg><span class="tcx mono" id="ptc">0:00</span><span class="pin" id="ppin"></span></div>
+              <div class="bar" id="pbar"><span class="fill" id="pfill"></span></div>
+              <div id="pnotes"></div>
+            </div>
+
+            <div class="scr full cam" data-s="film" id="s-film">
+              <svg id="pc"></svg>
+              <span class="gtxt" id="gtxt">Start and top hold inside the box</span>
+              <span class="guide" id="guide"></span>
+              <button class="x" data-go="review">Cancel</button>
+              <span class="timer mono" id="timer">0:00</span>
+              <div class="lens"><button data-lens="1">1×</button><button data-lens=".5" class="on">.5×</button></div>
+              <button class="rec" id="rec" aria-label="Record"></button>
+            </div>
+
+            <div class="scr" data-s="tag" id="s-tag">
+              <div class="apphead"><h3>Save climb</h3><span class="q mono">0:22</span></div>
+              <div class="fld"><span>Gym</span><div class="chips" id="tgym"></div></div>
+              <div class="fld"><span>Colour</span><div class="cols" id="tcol"></div></div>
+              <div class="fld"><span>Grade</span><div class="grade"><button data-g="-1" aria-label="Easier">−</button><b id="tgr">V4</b><button data-g="1" aria-label="Harder">+</button></div></div>
+              <div class="fld"><span>Result</span><div class="seg" id="tres"><button>Sent</button><button>Flashed</button><button class="on">Not yet</button></div></div>
+              <button class="go" id="tgo"><i id="tgoi"></i><span id="tgot">Get my notes</span></button>
+            </div>
+
+            <div class="scr" data-s="sets" id="s-sets">
+              <div class="apphead"><h3>New sets</h3><button class="pill w" id="fltr">Following</button></div>
+              <div class="feed" id="feed"></div>
+            </div>
+
+            <div class="scr" data-s="train" id="s-train">
+              <div class="apphead"><h3>Train</h3><span class="q mono">WED 21 OCT</span></div>
+              <div class="tcard"><span class="q mono">TODAY / 45 MIN</span><h4>Heel hook day</h4><span class="q">Built from your last three notes</span></div>
+              <div id="pdrills"></div>
+              <button class="go" id="pstart">Start session</button>
+            </div>
+
+            <div class="scr" data-s="gyms" id="s-gyms">
+              <div class="apphead"><h3>Gyms</h3><span class="q mono">LONDON</span></div>
+              <div class="gl" id="gl"></div>
+            </div>
+
+            <nav class="tabs" id="tabs">
+              <button data-tab="review" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>Climbs</button>
+              <button data-tab="train"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h3M18 12h3M6 8v8M18 8v8M9 10v4M15 10v4M9 12h6"/></svg>Train</button>
+              <button data-tab="sets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="13" r="3"/><circle cx="9" cy="17" r="2"/></svg>New sets</button>
+              <button data-tab="gyms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>Gyms</button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="hint" id="hint">Drag to turn it. Tap to use it.</span>
+  </div>
+  <div class="dots" id="dots" aria-label="Walkthrough steps"></div>
+</div>
+
+<section class="pad" id="eye">
+  <div class="head reveal">
+    <h2>Backup for you and your coach.</h2>
+    <p class="lead">Nobody catches everything in real time, and your coach can't watch every go. Grip keeps the tape, measures every frame and lines it up with your best attempt, so you can check what you felt and review it tighter together.</p>
+  </div>
+  <div class="eyebox reveal">
+    <div class="eyev" id="eyev" role="button" tabindex="0" aria-label="Play or pause the clip">
+      <svg id="eyes" aria-label="A climber heel hooking on an overhang, tracked as lines and joints"></svg>
+      <span class="tc2 mono" id="etc">FRAME 0 / 330</span>
+      <span class="soon q">Real footage from BlocFit coming soon</span>
+      <div class="lbl"><span id="enote">Watching…</span></div>
+    </div>
+    <div class="eyectl">
+      <input class="scrub" type="range" id="escrub" min="0" max="329" value="0" aria-label="Scrub through the clip frame by frame">
+      <div class="read">
+        <div><span>Heel knee</span><b id="r1">38°</b></div>
+        <div><span>Hips off wall</span><b id="r2">24cm</b></div>
+        <div><span>Your best go</span><b id="r3">15cm</b></div>
+        <div><span>Lock-off</span><b id="r4">64°</b></div>
+      </div>
+      <p class="cap" id="ecap">Slowed to a third. Drag the bar to step through it frame by frame. The dashed climber is your best go.</p>
+    </div>
+  </div>
+  <div class="four reveal">
+    <div><b>Catches what gets missed.</b><p>A heel hook is over in a third of a second. If your coach blinked, Grip didn't: thirty frames a second, all kept.</p></div>
+    <div><b>Measured, not guessed.</b><p>Knee angles in degrees, hips in centimetres off the wall. "Get your hips in" becomes a number you can beat.</p></div>
+    <div><b>Remembers every go.</b><p>Your best attempt sits over this one as a ghost, so you see exactly where they split.</p></div>
+    <div><b>Spots the pattern.</b><p>Hips dropped on four of five goes, only late in the session? Easy to miss in the room, obvious on the tape.</p></div>
+  </div>
+</section>
+
+<section class="pad" id="train">
+  <div class="head reveal">
+    <h2>Your training plan, built from your tape.</h2>
+    <p class="lead">Grip isn't just a camera. It's a training system with climbing, jiu-jitsu and calisthenics sessions inside. Every note it gives you feeds the plan, and every session lands in your log.</p>
+  </div>
+  <div class="trainbox reveal">
+    <div class="ttile plan">
+      <div class="seg" id="tsport"><button class="on" data-v="0">Climbing</button><button data-v="1">Jiu-jitsu</button><button data-v="2">Calisthenics</button></div>
+      <h3 id="tname">Heel hook day</h3>
+      <span class="because"><i></i><span id="tbec">Your last three notes were about the heel.</span></span>
+      <div class="drills" id="tdrills"></div>
+    </div>
+    <div class="ttile">
+      <div class="week" id="tweek"></div>
+      <div class="keyrow"><span><i style="background:var(--white)"></i>Climbing</span><span><i style="background:rgba(243,243,240,.55)"></i>Jiu-jitsu</span><span><i style="background:rgba(243,243,240,.3)"></i>Calisthenics</span></div>
+      <div class="totals"><div><b id="tses">4</b><span>Sessions this week</span></div><div><b>5h 10m</b><span>On the wall and mat</span></div><div><b>6</b><span>Clips reviewed</span></div></div>
+      <span class="health">Logs to Apple Health</span>
+    </div>
+  </div>
+</section>
+
+<section id="gyms">
+  <div class="pad head reveal">
+    <h2>Every gym in London, freshly set.</h2>
+    <p class="lead">Thirty-one walls and counting. See what went up this week before you pick where to climb tonight.</p>
+  </div>
+  <div class="sets"><div class="track" id="cards"></div></div>
+  <div class="pad follow reveal">
+    <div class="chips" id="fchips"></div>
+    <p class="count" id="fcount">Tap your gyms to follow them.</p>
+  </div>
+</section>
+
+<section class="pad" id="film">
+  <div class="head reveal">
+    <h2>Prop it. Press record.</h2>
+    <p class="lead">The hardest part is the angle. Set the shot up here and see what Grip would tell you before you film.</p>
+  </div>
+  <div class="vfwrap reveal">
+    <div class="vf" id="vf">
+      <svg id="vfs" aria-label="A preview of the shot"></svg>
+      <span class="guide"></span>
+      <span class="zoom" id="vfz">0.5×</span>
+      <div class="verdict ok" id="vfv" aria-live="polite"><i></i><span>Best shot. Hips, feet and the top hold are all in.</span></div>
+    </div>
+    <div class="ctl">
+      <div class="box"><span>Lens</span><div class="seg two" id="vlens"><button data-v="1">1×</button><button data-v=".5" class="on">0.5×</button></div></div>
+      <div class="box"><span>Angle</span><div class="seg" id="vang"><button data-v="behind">Behind</button><button data-v="45" class="on">45°</button><button data-v="side">Side-on</button></div></div>
+      <div class="box"><p class="tip"><b>Don't hold it.</b> Lean it on the mat edge, a rail or your bag, back as far as the room lets you.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="coaches">
+  <div class="head reveal">
+    <h2>You can't be at every session.</h2>
+    <p class="lead">Your climbers film between sessions. You review from anywhere, take bookings and get paid in the same app. Nothing beats you in the room, Grip covers the gaps. We keep customising it for your clients.</p>
+  </div>
+  <div class="coach reveal">
+    <div class="ctile">
+      <div class="inbox" id="inbox"></div>
+      <div class="book"><span>Thu 18:00 / Session at BlocFit</span><span><span class="q">£45, you get </span><span id="youget">£45.00</span></span></div>
+    </div>
+    <div class="ctile">
+      <div class="stats">
+        <div><b>Free</b><span>To join</span></div>
+        <div><b>£0</b><span>Fees in month one</span></div>
+        <div><b>8%</b><span>Per booking after</span></div>
+      </div>
+      <form class="form" novalidate><label for="e3" class="sr">Email</label><input id="e3" type="email" placeholder="you@email.com" autocomplete="email" required><button type="submit" class="btn">Join as a coach</button></form>
+      <span class="note" aria-live="polite"></span>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="sports">
+  <div class="head reveal">
+    <h2>Climbing first. More on the way.</h2>
+    <p class="lead">The same tracking works anywhere your body is the thing being judged. These are next.</p>
+  </div>
+  <div class="sports reveal">
+    <div class="sp live"><span class="st">In beta now</span><svg id="spc" aria-hidden="true"></svg><div><b>Climbing</b><p>Heel hooks, drop knees and boards, every gym in London.</p></div></div>
+    <div class="sp"><span class="st">Coming soon</span><svg id="sptri" aria-hidden="true"></svg><div><b>Jiu-jitsu</b><p>Hand-fighting, takedowns and drills: stance, head position and posture.</p></div></div>
+    <div class="sp"><span class="st">Coming soon</span><svg id="spmu" aria-hidden="true"></svg><div><b>Calisthenics</b><p>Muscle-ups, levers and handstands, every rep judged on form.</p></div></div>
+  </div>
+</section>
+
+<section class="pad" id="pricing">
+  <div class="head reveal">
+    <h2>Free to start. One price after.</h2>
+    <p class="lead">The feed, your gyms and your training log stay free. Three climb reviews a month are on us. Want more? It costs less than a coffee. Cancel any time in the App Store.</p>
+  </div>
+  <div class="reveal"><div class="bill" id="bill"><button data-v="m">Monthly</button><button data-v="y" class="on">Yearly, save 42%</button></div></div>
+  <div class="found reveal"><div><b>Founding members: £24.99 a year, locked for life.</b><span>For the first 500 climbers who join. Your price never goes up, whatever Grip adds.</span></div><a class="btn" href="#join">Claim a founding spot</a></div>
+  <div class="prices reveal">
+    <div class="pc">
+      <h3>Free</h3>
+      <div class="amt"><b>£0</b><span class="q">forever</span></div>
+      <ul><li>New-sets feed for every London gym</li><li>Follow gyms and get reset alerts</li><li>Training log and starter plans</li><li>3 climb reviews every month</li></ul>
+      <a class="btn ghost" href="#join">Join the beta</a>
+    </div>
+    <div class="pc main">
+      <h3>Grip</h3>
+      <div class="amt"><b id="pamt">£34.99</b><span class="q" id="pper">a year, under £3 a month</span></div>
+      <ul><li>Up to 20 climb reviews a month</li><li>Three notes on every climb, pinned to the second</li><li>Your best go as a ghost on every new one</li><li>Training plans built from your notes</li><li>Jiu-jitsu and calisthenics as they land</li></ul>
+      <a class="btn" href="#join">Try it free first</a>
+    </div>
+    <div class="pc">
+      <h3>Coach</h3>
+      <div class="amt"><b>8%</b><span class="q">per booking</span></div>
+      <ul><li>Free to join, no monthly fee</li><li>No booking fee in your first month</li><li>Client inbox: approve or edit Grip's drafts</li><li>Bookings and payments in the app</li><li>Built with you, customised for your clients</li></ul>
+      <a class="btn ghost" href="#coaches">Join as a coach</a>
+    </div>
+  </div>
+  <div class="where reveal">
+    <h3>Where your £4.99 goes</h3>
+    <div class="stack" aria-hidden="true"><i style="flex:.83;background:rgba(243,243,240,.18)"></i><i style="flex:.62;background:rgba(243,243,240,.32)"></i><i style="flex:.90;background:rgba(243,243,240,.5)"></i><i style="flex:.10;background:rgba(243,243,240,.7)"></i><i style="flex:2.54;background:var(--white)"></i></div>
+    <div class="legend">
+      <div><b>£0.83</b><span><i style="background:rgba(243,243,240,.18)"></i>VAT</span></div>
+      <div><b>£0.62</b><span><i style="background:rgba(243,243,240,.32)"></i>Apple's cut</span></div>
+      <div><b>£0.90</b><span><i style="background:rgba(243,243,240,.5)"></i>Reviewing your clips</span></div>
+      <div><b>£0.10</b><span><i style="background:rgba(243,243,240,.7)"></i>Storage and servers</span></div>
+      <div><b>£2.54</b><span><i style="background:var(--white)"></i>Building Grip</span></div>
+    </div>
+    <p class="q" style="font-size:14px">Estimates for an average month of about seven reviews.</p>
+  </div>
+</section>
+
+<section class="pad closer" id="join">
+  <div class="mark reveal"><div><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="6 36.5 88 34"><path fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M10 68H90M17 68V54a7 7 0 0 1 14 0V68M35 68V46a7 7 0 0 1 14 0V68M53 68V46a7 7 0 0 1 14 0V68M71 68V54a7 7 0 0 1 14 0V68"/></svg></div></div>
+  <h2>Watch the tape. Fix one thing.</h2>
+  <p class="lead">Free while in beta. iPhone first, London gyms first.</p>
+  <div style="width:100%;display:grid;justify-items:center"><form class="form" novalidate><label for="e2" class="sr">Email</label><input id="e2" type="email" placeholder="you@email.com" autocomplete="email" required><button type="submit" class="btn">Join the beta</button></form><span class="note" aria-live="polite"></span></div>
+</section>
+
+<footer class="pad"><span>g-r-i-p.com</span><span>Made in London</span></footer>
+<span id="an-note" hidden></span>
+
+<script>
+(function () {
+
+  var MINT = '#4A74FF', WHITE = '#F3F3F0';
+  var NS = 'http://www.w3.org/2000/svg';
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function hash(a, b) { var x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); }
+  function f(n) { return n.toFixed(2); }
+  function tc(t) { var s = Math.floor(t); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+  /* ---- climber: four limbs move up one hold at a time, the body follows by two-bone IK ---- */
+  var D = 8, ARM = 10, LEG = 11, PH = 1.15;
+  var BASE = { hL: [-9, 40], hR: [8, 44], fL: [-6, 0], fR: [6, 4] };
+  var ORDER = ['hR', 'fL', 'hL', 'fR'];
+  var NOTES = { hR: ['Right arm', 'stay straight'], fL: ['Left foot', 'place it quietly'], hL: ['Left hip', 'turn it in'], fR: ['Head', 'look before you reach'] };
+  function limbs(t) {
+    var s = Math.max(0, t) / PH, n = Math.floor(s / 4), k = Math.floor(s) % 4, p = ease(Math.min(1, (s % 1) * 1.3)), o = {};
+    ORDER.forEach(function (nm, i) {
+      var moves = n + (i < k ? 1 : 0), pr = i === k ? p : 0, b = BASE[nm];
+      var bulge = Math.sin(Math.PI * pr) * (nm[0] === 'h' ? 2.6 : 1.6) * (nm[1] === 'L' ? -1 : 1);
+      o[nm] = [b[0] + bulge, b[1] + D * (moves + pr), pr];
+    });
+    o.active = ORDER[k]; o.prog = p;
+    return o;
+  }
+  function ik(a, b, l1, l2, sg) {
+    var dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy), mx = l1 + l2 - .01, bx = b[0], by = b[1];
+    if (d > mx) { bx = a[0] + dx / d * mx; by = a[1] + dy / d * mx; d = mx; }
+    var an = Math.atan2(by - a[1], bx - a[0]), c = (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), off = Math.acos(Math.max(-1, Math.min(1, c)));
+    return [[a[0] + l1 * Math.cos(an + sg * off), a[1] + l1 * Math.sin(an + sg * off)], [bx, by]];
+  }
+  function body(L, o) {
+    o = o || {};
+    var fy = (L.fL[1] + L.fR[1]) / 2, hy = (L.hL[1] + L.hR[1]) / 2, fx = (L.fL[0] + L.fR[0]) / 2, hx = (L.hL[0] + L.hR[0]) / 2;
+    var P = [(fx + hx) / 2 * .8 + (o.shift || 0), (fy + hy) / 2 - 7 - (o.sag || 0)];
+    var S = [P[0] * .5 + hx * .3, P[1] + 16];
+    var J = { P: P, S: S, shL: [S[0] - 5, S[1]], shR: [S[0] + 5, S[1]], hiL: [P[0] - 3.5, P[1]], hiR: [P[0] + 3.5, P[1]], neck: [S[0], S[1] + 2], head: [S[0], S[1] + 6] };
+    var a = ik(J.shL, L.hL, ARM, ARM, 1); J.elL = a[0]; J.haL = a[1];
+    a = ik(J.shR, L.hR, ARM, ARM, -1); J.elR = a[0]; J.haR = a[1];
+    a = ik(J.hiL, L.fL, LEG, LEG, -1); J.knL = a[0]; J.ftL = a[1];
+    a = ik(J.hiR, L.fR, LEG, LEG, 1); J.knR = a[0]; J.ftR = a[1];
+    J.com = [P[0] * .5 + S[0] * .3 + (J.haL[0] + J.haR[0] + J.ftL[0] + J.ftR[0]) * .05, P[1] * .5 + S[1] * .3 + (J.haL[1] + J.haR[1] + J.ftL[1] + J.ftR[1]) * .05];
+    return J;
+  }
+  var BONES = [['shL', 'shR'], ['hiL', 'hiR'], ['shL', 'hiL'], ['shR', 'hiR'], ['shL', 'elL'], ['elL', 'haL'], ['shR', 'elR'], ['elR', 'haR'], ['hiL', 'knL'], ['knL', 'ftL'], ['hiR', 'knR'], ['knR', 'ftR'], ['S', 'neck']];
+  var MESH = [['shL', 'hiR'], ['shR', 'hiL'], ['elL', 'hiL'], ['elR', 'hiR']];
+  var DOTS = ['shL', 'shR', 'elL', 'elR', 'haL', 'haR', 'hiL', 'hiR', 'knL', 'knR', 'ftL', 'ftR', 'neck', 'S', 'P'];
+
+  function figure(J, X, Y, col, dash, op) {
+    var s = '', d = dash ? ' stroke-dasharray="3 3"' : '';
+    BONES.forEach(function (b) { s += '<line x1="' + f(X(J[b[0]])) + '" y1="' + f(Y(J[b[0]])) + '" x2="' + f(X(J[b[1]])) + '" y2="' + f(Y(J[b[1]])) + '"' + d + '/>'; });
+    var mesh = '';
+    MESH.forEach(function (b) { mesh += '<line x1="' + f(X(J[b[0]])) + '" y1="' + f(Y(J[b[0]])) + '" x2="' + f(X(J[b[1]])) + '" y2="' + f(Y(J[b[1]])) + '"/>'; });
+    var dots = '';
+    if (!dash) DOTS.forEach(function (k) { dots += '<circle cx="' + f(X(J[k])) + '" cy="' + f(Y(J[k])) + '" r=".75"/>'; });
+    var hd = '<circle cx="' + f(X(J.head)) + '" cy="' + f(Y(J.head)) + '" r="2.7" fill="none"' + d + '/>';
+    return '<g stroke="' + col + '" stroke-width="1.4" vector-effect="non-scaling-stroke" fill="none" opacity="' + (op || 1) + '" stroke-linecap="round">' +
+      '<g vector-effect="non-scaling-stroke">' + s + hd + '</g>' +
+      '<g opacity=".35">' + mesh + '</g>' +
+      '<g fill="#0D0E0D">' + dots + '</g></g>';
+  }
+  function fixStroke(svg) { svg.querySelectorAll('line,circle,path,polyline,polygon').forEach(function (e) { e.setAttribute('vector-effect', 'non-scaling-stroke'); }); }
+
+  function wall(x0, x1, y0, y1, X, Y, holds) {
+    var s = '<g stroke="' + WHITE + '" stroke-opacity=".07" stroke-width="1">';
+    for (var gx = Math.ceil(x0 / 8) * 8; gx <= x1; gx += 8) s += '<line x1="' + f(X([gx, 0])) + '" y1="' + f(Y([0, y0])) + '" x2="' + f(X([gx, 0])) + '" y2="' + f(Y([0, y1])) + '"/>';
+    for (var gy = Math.ceil(y0 / 8) * 8; gy <= y1; gy += 8) s += '<line x1="' + f(X([x0, 0])) + '" y1="' + f(Y([0, gy])) + '" x2="' + f(X([x1, 0])) + '" y2="' + f(Y([0, gy])) + '"/>';
+    s += '</g>';
+    if (!holds) return s;
+    s += '<g stroke="' + WHITE + '" stroke-opacity=".38" stroke-width="1" fill="none">';
+    var r0 = Math.floor(y0 / D) - 1, r1 = Math.ceil(y1 / D) + 1, r, i;
+    function hold(cx, cy, seed, sz) {
+      var pts = [], n = 5;
+      for (var v = 0; v < n; v++) { var an = v / n * Math.PI * 2 + seed * 3, rr = sz * (.7 + .5 * hash(seed, v)); pts.push(f(X([cx + Math.cos(an) * rr, 0])) + ',' + f(Y([0, cy + Math.sin(an) * rr * .8]))); }
+      return '<polygon points="' + pts.join(' ') + '"/>';
+    }
+    for (r = r0; r <= r1; r++) {
+      ORDER.forEach(function (nm, j) { var b = BASE[nm]; var y = b[1] + D * r; if (y > y0 - 4 && y < y1 + 4) s += hold(b[0], y - (nm[0] === 'h' ? 1 : 1.2), r * 4 + j, nm[0] === 'h' ? 1.6 : 1.3); });
+      for (i = 0; i < 3; i++) { var hx = -70 + hash(r, i + 9) * 140; if (Math.abs(hx) < 13) continue; s += hold(hx, D * r + hash(r, i + 3) * 8, r * 7 + i, .9 + hash(i, r) * 1.4); }
+    }
+    return s + '</g>';
+  }
+
+  /* ---- rolling: two bodies swap between closed guard and mount ---- */
+  var KA = { head: [38, 93], neck: [48, 95], elN: [62, 82], haN: [80, 66], elF: [64, 90], haF: [84, 78], hip: [84, 96], knN: [100, 78], ftN: [122, 84], knF: [102, 86], ftF: [124, 92] };
+  var KB = { head: [96, 40], neck: [100, 50], elN: [92, 64], haN: [82, 86], elF: [104, 66], haF: [90, 90], hip: [116, 80], knN: [108, 99], ftN: [140, 99], knF: [116, 99], ftF: [144, 99] };
+  var RB = [['neck', 'hip'], ['neck', 'elN'], ['elN', 'haN'], ['neck', 'elF'], ['elF', 'haF'], ['hip', 'knN'], ['knN', 'ftN'], ['hip', 'knF'], ['knF', 'ftF']];
+  function blend(a, b, u, lift) {
+    var o = {}; Object.keys(a).forEach(function (k) { o[k] = [lerp(a[k][0], b[k][0], u), lerp(a[k][1], b[k][1], u) - Math.sin(Math.PI * u) * lift]; }); return o;
+  }
+  function rollU(t) { var c = 5.4, s = (t % c + c) % c; if (s < 1.1) return [0, 0]; if (s < 2.7) return [ease((s - 1.1) / 1.6), 1]; if (s < 3.8) return [1, 1]; return [1 - ease((s - 3.8) / 1.6), 2]; }
+  function sideFig(K, col, op) {
+    var s = '<g stroke="' + col + '" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="' + op + '">';
+    RB.forEach(function (b) { var far = b[0].slice(-1) === 'F' || b[1].slice(-1) === 'F'; s += '<line x1="' + f(K[b[0]][0]) + '" y1="' + f(K[b[0]][1]) + '" x2="' + f(K[b[1]][0]) + '" y2="' + f(K[b[1]][1]) + '"' + (far ? ' stroke-opacity=".4"' : '') + '/>'; });
+    s += '<line x1="' + f(K.neck[0]) + '" y1="' + f(K.neck[1]) + '" x2="' + f(K.knN[0]) + '" y2="' + f(K.knN[1]) + '" stroke-opacity=".25"/>';
+    var tx = K.neck[0] - K.hip[0], ty = K.neck[1] - K.hip[1], tl = Math.hypot(tx, ty) || 1, hx = K.neck[0] + tx / tl * 5.4, hy = K.neck[1] + ty / tl * 5.4;
+    s += '<circle cx="' + f(hx) + '" cy="' + f(hy) + '" r="4.4"/><g fill="#0D0E0D">';
+    Object.keys(K).forEach(function (k) { if (k !== 'head') s += '<circle cx="' + f(K[k][0]) + '" cy="' + f(K[k][1]) + '" r="1"/>'; });
+    return s + '</g></g>';
+  }
+  var trail = [];
+  function drawRoll(svg, t) {
+    var uu = rollU(t), u = uu[0];
+    var A = blend(KA, KB, u, 14), B = blend(KB, KA, u, 5);
+    svg.setAttribute('viewBox', '0 22 184 92');
+    var s = '<g stroke="' + WHITE + '" stroke-opacity=".08">';
+    for (var x = 0; x <= 184; x += 16) s += '<line x1="' + x + '" y1="100" x2="' + (92 + (x - 92) * 1.6) + '" y2="114"/>';
+    s += '<line x1="0" y1="100" x2="184" y2="100" stroke-opacity=".3"/><line x1="0" y1="106" x2="184" y2="106"/></g>';
+    trail.push([A.hip[0], A.hip[1]]); if (trail.length > 70) trail.shift();
+    s += '<polyline fill="none" stroke="' + WHITE + '" stroke-opacity=".35" stroke-dasharray="1 2" points="' + trail.map(function (p) { return f(p[0]) + ',' + f(p[1]); }).join(' ') + '"/>';
+    s += sideFig(B, MINT, .6) + sideFig(A, MINT, 1);
+    svg.innerHTML = s; fixStroke(svg);
+    var lab = u < .08 ? 'Closed guard' : u > .92 ? 'Mount' : 'Sweep';
+    return lab;
+  }
+
+  /* ---- scenes ---- */
+  var cam = { hero: null, an: null, cmp: null }, comTrail = [];
+  function drawClimb(svg, t, mode, key) {
+    var L = limbs(t), J = body(L), h = mode === 'an' ? 84 : 100, asp = svg.clientWidth / Math.max(1, svg.clientHeight), w = h * (isFinite(asp) && asp > .3 ? asp : 2);
+    var target = J.P[1] + 7;
+    cam[key] = cam[key] == null ? target : cam[key] + (target - cam[key]) * .08;
+    var cy = cam[key];
+    svg.setAttribute('viewBox', (-w / 2) + ' ' + (-h / 2) + ' ' + w + ' ' + h);
+    var ox = mode === 'side' ? -w * .2 : 0;
+    var X = function (p) { return p[0] + ox; }, Y = function (p) { return -(p[1] - cy); };
+    var s = wall(-w / 2 - ox, mode === 'side' ? 4 - ox : w / 2, cy - h / 2 - 2, cy + h / 2 + 2, X, Y, true);
+
+    if (mode === 'friend') {
+      var Lf = limbs(t - .35), Jf = body(Lf, { sag: 3, shift: 1.6 });
+      s += figure(Jf, X, Y, WHITE, true, .7);
+    }
+    s += figure(J, X, Y, MINT, false, 1);
+
+    if (mode === 'an') {
+      comTrail.push([J.com[0], J.com[1]]); if (comTrail.length > 120) comTrail.shift();
+      s += '<polyline fill="none" stroke="' + WHITE + '" stroke-opacity=".45" stroke-dasharray="1 1.5" points="' + comTrail.map(function (p) { return f(X(p)) + ',' + f(Y(p)); }).join(' ') + '"/>';
+      var fl = Math.min(J.ftL[1], J.ftR[1]) - 3;
+      s += '<line x1="' + f(X(J.com)) + '" y1="' + f(Y(J.com)) + '" x2="' + f(X(J.com)) + '" y2="' + f(Y([0, fl])) + '" stroke="' + MINT + '" stroke-dasharray="1.5 1.5"/>';
+      s += '<circle cx="' + f(X(J.com)) + '" cy="' + f(Y(J.com)) + '" r="1.3" fill="' + WHITE + '"/>';
+      s += '<line x1="' + f(X(J.ftL)) + '" y1="' + f(Y([0, fl])) + '" x2="' + f(X(J.ftR)) + '" y2="' + f(Y([0, fl])) + '" stroke="' + WHITE + '" stroke-opacity=".5"/>';
+      function ang(a, b, c, side) {
+        var a1 = Math.atan2(a[1] - b[1], a[0] - b[0]), a2 = Math.atan2(c[1] - b[1], c[0] - b[0]);
+        var d = Math.abs(a1 - a2); if (d > Math.PI) d = 2 * Math.PI - d;
+        var r = 3, p1 = [b[0] + Math.cos(a1) * r, b[1] + Math.sin(a1) * r], p2 = [b[0] + Math.cos(a2) * r, b[1] + Math.sin(a2) * r];
+        var sw = ((a2 - a1 + 4 * Math.PI) % (2 * Math.PI)) < Math.PI ? 0 : 1;
+        return '<path d="M' + f(X(p1)) + ' ' + f(Y(p1)) + 'A' + r + ' ' + r + ' 0 0 ' + sw + ' ' + f(X(p2)) + ' ' + f(Y(p2)) + '" fill="none" stroke="' + WHITE + '"/>' +
+          '<text x="' + f(X(b) + side * 4.5) + '" y="' + f(Y(b) + 1) + '" text-anchor="' + (side < 0 ? 'end' : 'start') + '">' + Math.round(d * 180 / Math.PI) + '°</text>';
+      }
+      s += '<g fill="' + WHITE + '" font-family="DM Mono, monospace" font-size="1.7">';
+      s += ang(J.hiL, J.knL, J.ftL, -1) + ang(J.shR, J.elR, J.haR, 1);
+      var nm = L.active, nt = NOTES[nm], anchor = nm === 'hR' ? J.elR : nm === 'fL' ? J.ftL : nm === 'hL' ? J.hiL : J.head;
+      var lx = nm === 'hR' || nm === 'fR' ? 16 : -16, side = lx > 0 ? 'start' : 'end';
+      s += '<line x1="' + f(X(anchor)) + '" y1="' + f(Y(anchor)) + '" x2="' + f(X(anchor) + lx) + '" y2="' + f(Y(anchor) - 6) + '" stroke="' + WHITE + '" stroke-opacity=".6"/>';
+      s += '<text x="' + f(X(anchor) + lx + (lx > 0 ? 1 : -1)) + '" y="' + f(Y(anchor) - 7) + '" text-anchor="' + side + '">' + nt[0].toUpperCase() + '</text>';
+      s += '<text x="' + f(X(anchor) + lx + (lx > 0 ? 1 : -1)) + '" y="' + f(Y(anchor) - 4.6) + '" text-anchor="' + side + '" fill-opacity=".6">' + nt[1].toUpperCase() + '</text></g>';
+      document.getElementById('an-note').textContent = nt[0] + ' / ' + nt[1];
+    }
+
+    if (mode === 'side') {
+      var wx = w * .12;
+      s += '<line x1="' + wx + '" y1="' + (-h / 2) + '" x2="' + wx + '" y2="' + (h / 2) + '" stroke="' + WHITE + '" stroke-opacity=".35"/>';
+      var dep = function (k) {
+        var base = { haL: 0, haR: 0, ftL: 0, ftR: 0, elL: 6, elR: 6, knL: 8, knR: 8, shL: 7, shR: 7, hiL: 10, hiR: 10, P: 10, S: 7, neck: 8, head: 10 }[k];
+        if (k === 'haL' || k === 'haR' || k === 'ftL' || k === 'ftR') { var nm2 = { haL: 'hL', haR: 'hR', ftL: 'fL', ftR: 'fR' }[k]; base += Math.sin(Math.PI * L[nm2][2]) * 4; }
+        if (k === 'hiL' || k === 'hiR' || k === 'P') base += Math.sin(Math.PI * L.prog) * (L.active[0] === 'h' ? 3 : -1.5);
+        return base;
+      };
+      var JS = {}; Object.keys(J).forEach(function (k) { if (J[k] && J[k].length === 2) JS[k] = [dep(k) == null ? 6 : dep(k), J[k][1]]; });
+      var XS = function (p) { return wx + p[0]; };
+      for (var r = Math.floor((cy - 40) / D); r <= Math.ceil((cy + 40) / D); r++) {
+        ORDER.forEach(function (nm3) { var yy = BASE[nm3][1] + D * r; s += '<path d="M' + wx + ' ' + f(Y([0, yy + 1.2])) + 'l1.6 1.4l-1.6 .4z" fill="none" stroke="' + WHITE + '" stroke-opacity=".38"/>'; });
+      }
+      s += figure(JS, XS, Y, MINT, false, 1);
+      s += '<g fill="' + WHITE + '" font-family="DM Mono, monospace" font-size="1.7" fill-opacity=".55"><text x="' + f(-w / 2 + 6) + '" y="' + f(h / 2 - 4) + '">FRONT</text><text x="' + (wx + 2) + '" y="' + f(h / 2 - 4) + '">SIDE</text></g>';
+      var hipOff = dep('P');
+      s += '<g fill="' + WHITE + '" font-family="DM Mono, monospace" font-size="1.7"><line x1="' + wx + '" y1="' + f(Y(J.P) + 6) + '" x2="' + f(wx + hipOff) + '" y2="' + f(Y(J.P) + 6) + '" stroke="' + WHITE + '"/><text x="' + f(wx + hipOff + 2) + '" y="' + f(Y(J.P) + 6.8) + '">HIPS ' + Math.round(hipOff * 3) + ' CM OFF THE WALL</text></g>';
+    }
+    svg.innerHTML = s; fixStroke(svg);
+    return L;
+  }
+
+
+  /* ---- pose scenes (19 Oct 2026): hand-keyed moves that read as real technique, drawn in the tracked-body style.
+     Elliot: the straight-wall ladder climber "is not how you do it"; show a heel hook, a proper roll, a strict muscle-up.
+     Each figure is keyframes of 11 joints in a 100-unit side view; far limbs dimmed. ---- */
+  var PBLUE = '#4A74FF', PWHITE = '#F3F3F0';
+  function pe(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function pAt(frames, t) {
+    var i = 0; while (i < frames.length - 2 && t >= frames[i + 1][0]) i++;
+    var a = frames[i], b = frames[i + 1], k = b[0] === a[0] ? 0 : Math.max(0, Math.min(1, (t - a[0]) / (b[0] - a[0]))), e = pe(k), o = {};
+    for (var key in a[1]) { var p = a[1][key], q = b[1][key] || p; o[key] = [p[0] + (q[0] - p[0]) * e, p[1] + (q[1] - p[1]) * e]; }
+    return o;
+  }
+  function pang(a, b, c) {
+    var a1 = Math.atan2(a[1] - b[1], a[0] - b[0]), a2 = Math.atan2(c[1] - b[1], c[0] - b[0]), d = Math.abs(a1 - a2);
+    if (d > Math.PI) d = 2 * Math.PI - d; return d * 180 / Math.PI;
+  }
+  function parc(a, b, c, r, lbl, side) {
+    var a1 = Math.atan2(a[1] - b[1], a[0] - b[0]), a2 = Math.atan2(c[1] - b[1], c[0] - b[0]);
+    var p1 = [b[0] + Math.cos(a1) * r, b[1] + Math.sin(a1) * r], p2 = [b[0] + Math.cos(a2) * r, b[1] + Math.sin(a2) * r];
+    var sw = ((a2 - a1 + 4 * Math.PI) % (2 * Math.PI)) < Math.PI ? 1 : 0;
+    return '<path d="M' + f(p1[0]) + ' ' + f(p1[1]) + 'A' + r + ' ' + r + ' 0 0 ' + sw + ' ' + f(p2[0]) + ' ' + f(p2[1]) + '" fill="none" stroke="' + PWHITE + '" stroke-width=".35"/>' +
+      '<text x="' + f(b[0] + side * (r + 1.4)) + '" y="' + f(b[1] + .8) + '" text-anchor="' + (side < 0 ? 'end' : 'start') + '">' + Math.round(pang(a, b, c)) + '°</text>';
+  }
+  function pfig(J, col, op, ghost) {
+    var far = ghost ? op : op * .42, s = '', w = ghost ? .5 : .9;
+    var L = function (a, b, o) { return '<line x1="' + f(a[0]) + '" y1="' + f(a[1]) + '" x2="' + f(b[0]) + '" y2="' + f(b[1]) + '" stroke="' + col + '" stroke-opacity="' + o + '" stroke-width="' + w + '" stroke-linecap="round"' + (ghost ? ' stroke-dasharray="1 1"' : '') + '/>'; };
+    var C = function (p, o) { return ghost ? '' : '<circle cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r=".75" fill="#000" stroke="' + col + '" stroke-opacity="' + o + '" stroke-width=".4"/>'; };
+    s += L(J.N, J.eR, far) + L(J.eR, J.hR, far) + L(J.P, J.kR, far) + L(J.kR, J.fR, far);
+    s += C(J.eR, far) + C(J.hR, far) + C(J.kR, far) + C(J.fR, far);
+    s += L(J.N, J.P, op) + L(J.N, J.H, op);
+    s += '<circle cx="' + f(J.H[0]) + '" cy="' + f(J.H[1]) + '" r="2.7" fill="#000" stroke="' + col + '" stroke-opacity="' + op + '" stroke-width="' + w + '"' + (ghost ? ' stroke-dasharray="1 1"' : '') + '/>';
+    s += L(J.N, J.eL, op) + L(J.eL, J.hL, op) + L(J.P, J.kL, op) + L(J.kL, J.fL, op);
+    s += C(J.N, op) + C(J.P, op) + C(J.eL, op) + C(J.hL, op) + C(J.kL, op) + C(J.fL, op);
+    return s;
+  }
+  function pPin(at, dx, dy, a, b) {
+    var x = at[0] + dx, y = at[1] + dy, end = dx < 0 ? 'end' : 'start';
+    return '<line x1="' + f(at[0]) + '" y1="' + f(at[1]) + '" x2="' + f(x) + '" y2="' + f(y + 1) + '" stroke="' + PWHITE + '" stroke-opacity=".6" stroke-width=".3"/>' +
+      '<text x="' + f(x + (dx < 0 ? -.6 : .6)) + '" y="' + f(y) + '" text-anchor="' + end + '">' + a + '</text>' +
+      '<text x="' + f(x + (dx < 0 ? -.6 : .6)) + '" y="' + f(y + 2.4) + '" text-anchor="' + end + '" fill-opacity=".6">' + b + '</text>';
+  }
+  function farFill(k) { // calisthenics frames give one side only; derive the far side a touch behind
+    for (var i = 0; i < k.length; i++) { var j = k[i][1]; ['e', 'h', 'k', 'f'].forEach(function (n) { if (!j[n + 'R']) j[n + 'R'] = [j[n + 'L'][0] + 1.3, j[n + 'L'][1] + .3]; }); }
+    return k;
+  }
+
+  /* heel hook on a 25° overhang: match, heel up by the hands, pull through the heel, reach long */
+  var WX = function (y) { return 28 + .44 * y; };
+  var HK0 = { H: [33, 44.5], N: [36, 48], P: [47, 63], eL: [38, 41], hL: [43, 34], eR: [41, 42], hR: [43.5, 34.5], kR: [52, 71], fR: [60.6, 74], kL: [54, 62.5], fL: [58.8, 70] };
+  var HK1 = { H: [31.5, 43], N: [35, 46.5], P: [46, 60], eL: [37.5, 40], hL: [43, 34], eR: [40, 41], hR: [43.5, 34.5], kR: [51, 69], fR: [60.6, 74], kL: [39, 51.5], fL: [46.5, 42] };
+  var HK2 = { H: [29, 36], N: [32, 40], P: [42, 50], eL: [32, 31], hL: [34, 22], eR: [39, 42], hR: [43.5, 34.5], kR: [47, 58], fR: [50, 67], kL: [36, 43.5], fL: [46.5, 42] };
+  var HK3 = { H: [28, 24], N: [31, 28], P: [40, 43], eL: [30, 20], hL: [33.3, 12], eR: [37, 33], hR: [43.5, 34.5], kR: [44, 52], fR: [46, 61], kL: [37.5, 35.5], fL: [46.5, 42] };
+  var HOOK = { len: 11, frames: [[0, HK0], [1.2, HK0], [3, HK1], [5.2, HK2], [6.6, HK3], [8.6, HK3], [11, HK0]],
+    notes: [[2.4, 'Heel in before you pull.', 'Right heel / knee at 38°'], [4.6, 'Drag the hips to the wall.', 'Hips 24cm off, best go 15cm'], [6.2, 'Reach long, don\'t snatch.', 'Left arm / lock-off at 64°']] };
+  function hookWall(x0, x1, y0, y1) {
+    var s = '<path d="M' + f(WX(y0 - 40)) + ' ' + (y0 - 40) + 'L' + f(WX(y1 + 40)) + ' ' + (y1 + 40) + 'L' + (x1 + 60) + ' ' + (y1 + 40) + 'L' + (x1 + 60) + ' ' + (y0 - 40) + 'Z" fill="#101111"/>';
+    for (var g = -40; g < 160; g += 8) s += '<line x1="' + f(WX(g)) + '" y1="' + g + '" x2="' + (x1 + 60) + '" y2="' + f(g - (x1 + 60 - WX(g)) * .1) + '" stroke="#000" stroke-width=".4"/>';
+    s += '<line x1="' + f(WX(y0 - 40)) + '" y1="' + (y0 - 40) + '" x2="' + f(WX(y1 + 40)) + '" y2="' + (y1 + 40) + '" stroke="' + PWHITE + '" stroke-opacity=".35" stroke-width=".35"/>';
+    [[34, 4.6, 0], [42, 3.4, 1], [12, 4, 0], [74, 3, 1], [70, 2.6, 1], [-4, 3.6, 0], [26, 2.4, 1], [56, 3, 0], [88, 3.4, 1], [100, 2.6, 0]].forEach(function (h) {
+      var x = WX(h[0]); s += '<path d="M' + f(x - h[1] * .9) + ' ' + f(h[0] - .4) + 'q' + f(h[1] * .3) + ' ' + f(-h[1] * .9) + ' ' + f(h[1] * 1.5) + ' ' + f(-h[1] * .2) + 'l.6 ' + f(h[1] * .6) + 'z" fill="none" stroke="' + PWHITE + '" stroke-opacity="' + (h[2] ? .35 : .6) + '" stroke-width=".35"/>';
+    });
+    return s;
+  }
+  var HROT = -10, HC = Math.cos(HROT * Math.PI / 180), HS = Math.sin(HROT * Math.PI / 180);
+  function HR(p) { var x = p[0] - 45, y = p[1] - 50; return [45 + x * HC - y * HS, 50 + x * HS + y * HC]; }
+  function wallCm(P) { return Math.abs(P[0] - WX(P[1])) / 1.0925 * 3; }
+
+  /* jiu-jitsu, stood up (Elliot: keep it wrestling-style, hands on shoulders): collar tie, hand-fight, arm drag to the angle.
+     You in blue on the left, partner in white */
+  var TB0 = { H: [41, 47], N: [38, 52], P: [36, 72], eL: [48, 56], hL: [58, 51], eR: [45, 64], hR: [54, 62], kL: [33, 83], fL: [30, 94], kR: [41, 83], fR: [42, 94] };
+  var TB1 = { H: [41, 48], N: [38, 53], P: [36, 72], eL: [48, 57], hL: [58, 52], eR: [43, 66], hR: [51, 70], kL: [33, 83], fL: [30, 94], kR: [42, 83], fR: [44, 94] };
+  var TB2 = { H: [52, 48], N: [50, 54], P: [46, 73], eL: [55, 61], hL: [61, 60], eR: [47, 62], hR: [44, 67], kL: [40, 84], fL: [37, 94], kR: [53, 84], fR: [55, 94] };
+  var TT0 = { H: [59, 47], N: [62, 52], P: [64, 72], eL: [52, 56], hL: [42, 51], eR: [55, 64], hR: [46, 62], kL: [67, 83], fL: [70, 94], kR: [59, 83], fR: [58, 94] };
+  var TT1 = { H: [59, 49], N: [62, 54], P: [64, 72], eL: [56, 64], hL: [50, 69], eR: [52, 57], hR: [42, 52], kL: [67, 83], fL: [70, 94], kR: [59, 83], fR: [57, 94] };
+  var TT2 = { H: [57, 53], N: [60, 57], P: [65, 74], eL: [54, 62], hL: [45, 66], eR: [58, 62], hR: [54, 70], kL: [68, 84], fL: [71, 94], kR: [60, 84], fR: [57, 94] };
+  var TRI = { len: 8.6, you: [[0, TB0], [1.4, TB0], [2.8, TB1], [4.6, TB2], [6.6, TB2], [8.6, TB0]], them: [[0, TT0], [1.4, TT0], [2.8, TT1], [4.6, TT2], [6.6, TT2], [8.6, TT0]] };
+
+  /* calisthenics: one strict muscle-up, dead hang to support and back down */
+  var MU = { len: 9, frames: farFill([
+    [0, { H: [46, 49], N: [49, 53], P: [49, 72], eL: [49.5, 44], hL: [50, 36], kL: [50, 82], fL: [51, 92] }],
+    [1, { H: [46, 49], N: [49, 53], P: [49, 72], eL: [49.5, 44], hL: [50, 36], kL: [50, 82], fL: [51, 92] }],
+    [2, { H: [44, 48], N: [47, 51], P: [44, 69], eL: [47, 43], hL: [50, 36], kL: [49, 78], fL: [56, 84] }],
+    [3.4, { H: [45, 38], N: [47, 42], P: [46, 60], eL: [41, 40], hL: [50, 36], kL: [51, 68], fL: [55, 76] }],
+    [4.4, { H: [57, 32], N: [54, 36], P: [50, 52], eL: [46, 30], hL: [50, 36], kL: [52, 62], fL: [51, 72] }],
+    [5.4, { H: [51, 16], N: [50, 21], P: [50, 41], eL: [49, 28], hL: [50, 36], kL: [51, 51], fL: [51, 61] }],
+    [6.8, { H: [51, 16], N: [50, 21], P: [50, 41], eL: [49, 28], hL: [50, 36], kL: [51, 51], fL: [51, 61] }],
+    [9, { H: [46, 49], N: [49, 53], P: [49, 72], eL: [49.5, 44], hL: [50, 36], kL: [50, 82], fL: [51, 92] }]]) };
+
+  function hookStats(t) { var tt = ((t % HOOK.len) + HOOK.len) % HOOK.len, J = pAt(HOOK.frames, tt); return { knee: pang(J.P, J.kL, J.fL), cm: wallCm(J.P), lock: pang(J.N, J.eR, J.hR) }; }
+
+  /* draw one scene into an svg. o: {ann: labels on, ghost: best-go overlay, trail: hip path} */
+  var pTrails = {};
+  function pScene(svg, name, t, o) {
+    o = o || {}; var s = '', ann = o.ann, vb, key = svg.id || name;
+    if (name === 'hook') {
+      vb = [12, 2, 62, 76];
+      var tt = ((t % HOOK.len) + HOOK.len) % HOOK.len, J0 = pAt(HOOK.frames, tt), J = {};
+      for (var k0 in J0) J[k0] = HR(J0[k0]);
+      s += '<g transform="rotate(' + HROT + ' 45 50)">' + hookWall(vb[0], vb[0] + vb[2], vb[1], vb[1] + vb[3]) + '</g>';
+      if (o.trail) {
+        var tr = pTrails[key] = pTrails[key] || []; tr.push(J.P.slice()); if (tr.length > 70) tr.shift();
+        s += '<polyline fill="none" stroke="' + PWHITE + '" stroke-opacity=".4" stroke-width=".35" stroke-dasharray=".8 1" points="' + tr.map(function (p) { return f(p[0]) + ',' + f(p[1]); }).join(' ') + '"/>';
+      }
+      if (o.ghost) {
+        var G = {}, n = [.915 * 3, -.4 * 3];
+        for (var k in J0) G[k] = HR(/^(hL|hR|fL)$/.test(k) || (k === 'fR' && tt < 4) ? J0[k] : [J0[k][0] + n[0], J0[k][1] + n[1]]);
+        s += pfig(G, PWHITE, .4, true);
+      }
+      s += pfig(J, PBLUE, 1);
+      if (ann) {
+        s += '<g fill="' + PWHITE + '" font-family="DM Mono, monospace" font-size="1.9">';
+        s += parc(J.P, J.kL, J.fL, 3, 0, -1) + parc(J.N, J.eR, J.hR, 2.6, 0, 1);
+        var wp = HR([WX(J0.P[1]), J0.P[1]]), d = wallCm(J0.P);
+        s += '<line x1="' + f(J.P[0]) + '" y1="' + f(J.P[1]) + '" x2="' + f(wp[0]) + '" y2="' + f(wp[1]) + '" stroke="' + PBLUE + '" stroke-width=".4" stroke-dasharray="1 .8"/><text x="' + f((J.P[0] + wp[0]) / 2 + 1) + '" y="' + f((J.P[1] + wp[1]) / 2 + 3.2) + '" text-anchor="middle">' + Math.round(d) + 'cm</text>';
+        if (tt > 2 && tt < 5) s += pPin(J.fL, 7, -8, 'HEEL HOOK', 'PULL THROUGH THE HEEL');
+        else if (tt >= 5 && tt < 8.6) s += pPin(J.hL, 8, -3, 'REACH', 'HIPS IN FIRST');
+        s += '<text x="' + (vb[0] + 2) + '" y="' + (vb[1] + vb[3] - 2) + '" fill-opacity=".5">35° OVERHANG</text>';
+        s += '</g>';
+      }
+    } else if (name === 'tri') {
+      vb = [18, 38, 64, 60];
+      var tb = ((t % TRI.len) + TRI.len) % TRI.len, Y = pAt(TRI.you, tb), T = pAt(TRI.them, tb);
+      s += '<rect x="-40" y="93.4" width="200" height="40" fill="#101111"/><line x1="-40" y1="93.4" x2="160" y2="93.4" stroke="' + PWHITE + '" stroke-opacity=".35" stroke-width=".35"/>';
+      for (var m = -40; m < 160; m += 10) s += '<line x1="' + m + '" y1="93.4" x2="' + (m - 6) + '" y2="100" stroke="#000" stroke-width=".4"/>';
+      s += pfig(T, PWHITE, .7);
+      s += pfig(Y, PBLUE, 1);
+      if (ann) {
+        s += '<g fill="' + PWHITE + '" font-family="DM Mono, monospace" font-size="1.9">' + parc(Y.P, Y.kR, Y.fR, 2.6, 0, 1) + parc(Y.H, Y.N, Y.P, 2.6, 0, -1);
+        if (tb > .2 && tb < 3) s += pPin(Y.hL, -14, -9, 'COLLAR TIE', 'HEAD UP, ELBOW IN');
+        else if (tb >= 3.4 && tb < 7.4) s += pPin(Y.H, 6, -6, 'ARM DRAG', 'HIPS TO THE ANGLE');
+        s += '</g>';
+      }
+    } else {
+      vb = [26, 10, 48, 86];
+      var tm = ((t % MU.len) + MU.len) % MU.len, M = pAt(MU.frames, tm);
+      s += '<line x1="20" y1="36" x2="80" y2="36" stroke="' + PWHITE + '" stroke-opacity=".7" stroke-width="1.1" stroke-linecap="round"/><line x1="26" y1="36" x2="26" y2="0" stroke="' + PWHITE + '" stroke-opacity=".25" stroke-width=".6"/><line x1="74" y1="36" x2="74" y2="0" stroke="' + PWHITE + '" stroke-opacity=".25" stroke-width=".6"/>';
+      s += pfig(M, PBLUE, 1);
+      if (ann) {
+        s += '<g fill="' + PWHITE + '" font-family="DM Mono, monospace" font-size="1.9">' + parc(M.N, M.eL, M.hL, 2.6, 0, -1) + parc(M.N, M.P, M.fL, 3, 0, 1);
+        if (tm > 3.6 && tm < 5.2) s += pPin(M.H, 6, -6, 'TRANSITION', 'ELBOWS OVER FAST');
+        s += '<text x="76" y="94" text-anchor="end">' + (tm > 5.2 && tm < 8 ? 'REP 1 / STRICT' : 'REP 0') + '</text></g>';
+      }
+    }
+    svg.setAttribute('viewBox', vb.join(' '));
+    svg.innerHTML = s;
+  }
+
+  var $ = function (s, r) { return (r || document).querySelector(s); }, $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* demo forms: nothing leaves the page */
+  $$('form.form').forEach(function (fm) {
+    fm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var inp = $('input', fm), n = fm.parentNode.querySelector('.note');
+      if (!inp.value || !inp.checkValidity()) { n.textContent = 'Enter an email, like you@email.com'; inp.focus(); return; }
+      n.textContent = 'Demo only: ' + inp.value + ' would go on the list.'; inp.value = '';
+    });
+  });
+
+  /* header goes solid once you scroll */
+  var top = $('#top');
+  addEventListener('scroll', function () { top.classList.toggle('solid', scrollY > 40); }, { passive: true });
+
+  /* reveal on scroll */
+  var rio = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } }); }, { rootMargin: '0px 0px -12% 0px' }) : null;
+  $$('.reveal').forEach(function (el) { if (rio) rio.observe(el); else el.classList.add('in'); });
+
+  /* ---------- shared data ---------- */
+  var HEX = { purple: '#8A5BD6', yellow: '#F2D43C', green: '#3FAE5A', blue: '#3D7EE8', pink: '#EE7FB7', red: '#E0443E', orange: '#F08A24', white: '#E8E8E4', black: '#2a2a2a' };
+  var SETS = [['BlocFit', 'Cave', ['purple', 'yellow'], '2h ago'], ['Stronghold', 'Comp wall', ['green'], '5h ago'], ['The Castle', 'Slab', ['blue', 'pink'], 'Yesterday'], ['The Arch', 'Main', ['red', 'orange'], '3 days ago'], ['VauxWall East', 'Overhang', ['yellow', 'white'], '4h ago'], ['Yonder', 'Board', ['pink', 'green'], '6h ago'], ['Hackney Wick', 'Spaceship', ['orange', 'blue'], 'Yesterday']];
+  function wallSvg(seed, cols, n) {
+    var r = seed * 9301 + 7, rnd = function () { r = (r * 9301 + 49297) % 233280; return r / 233280; };
+    var s = '<svg viewBox="0 0 400 500" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="400" height="500" fill="#151616"/><path d="M0 170L400 110M0 350L400 290M140 0L200 500M300 0L260 500" stroke="#000" stroke-width="3" opacity=".7"/>';
+    for (var i = 0; i < (n || 44); i++) { var c = i % 3 ? HEX[cols[i % cols.length]] : '#3a3b3c', x = rnd() * 380 + 10, y = rnd() * 480 + 10, w = 6 + rnd() * 16; s += '<ellipse cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" rx="' + w.toFixed(1) + '" ry="' + (w * .7).toFixed(1) + '" fill="' + c + '" transform="rotate(' + (rnd() * 90).toFixed(0) + ' ' + x.toFixed(0) + ' ' + y.toFixed(0) + ')"/>'; }
+    return s + '</svg>';
+  }
+  var NAMES = ["BethWall", "BlocFit", "CanaryWall", "City Bouldering", "CroyWall", "EustonWall", "Hackney Wick Boulder Project", "Hang.", "HarroWall", "Mile End Climbing Wall", "Parthian", "RavensWall", "Rise Climbing", "Romford Rock & Boulder", "Stronghold", "Substation", "The Arch", "The Arch North", "The Arch, Building One", "The Boardroom", "The Castle", "The Climbing Hangar", "The Font", "The Nest", "The Reach", "VauxWall East", "VauxWall West", "West1", "Westway", "White Spider", "Yonder"];
+  var CLIP = HOOK.notes, LEN = HOOK.len;
+
+  /* ---------- the phone app ---------- */
+  var screen = $('#screen'), tabs = $('#tabs'), cur = 'review';
+  function show(name, fromScroll) {
+    var s = name === 'rate' ? 'review' : name;
+    $$('.scr', screen).forEach(function (el) { el.classList.toggle('on', el.dataset.s === s); });
+    $('#s-review').classList.toggle('ratefocus', name === 'rate');
+    tabs.classList.toggle('hide', s === 'film');
+    $$('button', tabs).forEach(function (b) { b.classList.toggle('on', b.dataset.tab === s || (s === 'tag' && b.dataset.tab === 'review')); });
+    if (name === 'rate') seek(4.6);
+    if (s === 'tag') resetGo();
+    cur = s;
+  }
+  $$('button', tabs).forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  $$('[data-go]', screen).forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.go); }); });
+
+  /* review: video, timeline, notes that seek and rate */
+  var pbar = $('#pbar'), pfill = $('#pfill'), ptc = $('#ptc'), ppin = $('#ppin'), clipT0 = performance.now();
+  CLIP.forEach(function (n) { var m = document.createElement('span'); m.className = 'mk'; m.style.left = (n[0] / LEN * 100) + '%'; pbar.appendChild(m); });
+  $('#pnotes').innerHTML = CLIP.map(function (n, i) {
+    return '<div class="nt" role="button" tabindex="0" data-i="' + i + '"><span class="mono">' + tc(n[0]) + '</span><b>' + n[1] + '</b><span class="pt">' + n[2] + '</span>' +
+      '<span class="rate"><button class="pill" data-r="1">Helped</button><button class="pill" data-r="0">Not for me</button></span></div>';
+  }).join('');
+  var nts = $$('.nt', screen);
+  function seek(t) { clipT0 = performance.now() - t * 1000; }
+  nts.forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      var r = e.target.closest('[data-r]');
+      if (r) {
+        e.stopPropagation();
+        var box = r.parentNode; box.innerHTML = '<span class="q" style="font-size:12px">' + (r.dataset.r === '1' ? 'Nice. More like this next time.' : 'Got it. Fewer like this.') + '</span>';
+        return;
+      }
+      seek(CLIP[+el.dataset.i][0]);
+    });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+  });
+  pbar.addEventListener('click', function (e) { var b = pbar.getBoundingClientRect(); seek(Math.max(0, Math.min(.99, (e.clientX - b.left) / b.width)) * LEN); });
+  function clipTime() { return ((performance.now() - clipT0) / 1000) % LEN; }
+
+  /* film: lens, record */
+  var rec = $('#rec'), timer = $('#timer'), recT = 0, recOn = false, lens = .5;
+  rec.addEventListener('click', function () {
+    recOn = !recOn; rec.classList.toggle('on', recOn); timer.classList.toggle('on', recOn);
+    $('#guide').style.opacity = recOn ? 0 : 1; $('#gtxt').style.opacity = recOn ? 0 : 1;
+    if (recOn) recT = performance.now(); else setTimeout(function () { show('tag'); }, 350);
+  });
+  $$('[data-lens]', screen).forEach(function (b) { b.addEventListener('click', function () { lens = +b.dataset.lens; $$('[data-lens]', screen).forEach(function (x) { x.classList.toggle('on', x === b); }); $('#pc').style.transform = lens === 1 ? 'scale(1.7)' : 'none'; }); });
+
+  /* tag: gym, colour, grade, result, then a fake analysis bar */
+  var GYMS = ['The Castle', 'BlocFit', 'Stronghold', 'The Arch'], COLS = ['blue', 'purple', 'yellow', 'green', 'pink', 'red'], grade = 4;
+  $('#tgym').innerHTML = GYMS.map(function (g, i) { return '<button class="pill' + (i ? '' : ' w') + '">' + g + '</button>'; }).join('');
+  $('#tcol').innerHTML = COLS.map(function (c, i) { return '<button aria-label="' + c + '" style="background:' + HEX[c] + '"' + (i ? '' : ' class="on"') + '></button>'; }).join('');
+  function single(box, cls) { $$('button', box).forEach(function (b) { b.addEventListener('click', function () { $$('button', box).forEach(function (x) { x.classList.toggle(cls, x === b); }); }); }); }
+  single($('#tgym'), 'w'); single($('#tcol'), 'on'); single($('#tres'), 'on');
+  $$('[data-g]', screen).forEach(function (b) { b.addEventListener('click', function () { grade = Math.max(0, Math.min(10, grade + +b.dataset.g)); $('#tgr').textContent = 'V' + grade; }); });
+  var going = false;
+  function resetGo() { going = false; $('#tgoi').style.transition = 'none'; $('#tgoi').style.width = '0'; $('#tgot').textContent = 'Get my notes'; }
+  $('#tgo').addEventListener('click', function () {
+    if (going) return; going = true;
+    $('#tgot').textContent = 'Watching your climb…';
+    var i = $('#tgoi'); i.offsetWidth; i.style.transition = 'width 1.4s cubic-bezier(.4,0,.2,1)'; i.style.width = '100%';
+    setTimeout(function () { seek(0); show('review'); }, 1500);
+  });
+
+  /* sets feed + gyms list */
+  $('#feed').innerHTML = SETS.slice(0, 4).map(function (c, i) { return '<div class="fc">' + wallSvg(i + 3, c[2], 26) + '<div><b>' + c[0] + '</b><span class="q">' + c[1] + ' / ' + c[3] + '</span><br><span class="new">' + c[2].join(' + ') + '</span></div></div>'; }).join('');
+  $('#fltr').addEventListener('click', function () { var f = this.classList.toggle('w'); this.textContent = f ? 'Following' : 'All London'; });
+  $('#gl').innerHTML = ['The Castle', 'BlocFit', 'Stronghold', 'The Arch', 'VauxWall East', 'Yonder', 'The Font'].map(function (g, i) { return '<div><span>' + g + '<small>' + ['Reset 1 day ago', 'Reset 2h ago', 'Reset 5h ago', 'Reset 3 days ago', 'Reset 4h ago', 'Reset 6h ago', 'Reset last week'][i] + '</small></span><button class="pill' + (i < 3 ? ' w' : '') + '">' + (i < 3 ? 'Following' : 'Follow') + '</button></div>'; }).join('');
+  $$('#gl .pill').forEach(function (b) { b.addEventListener('click', function () { var on = b.classList.toggle('w'); b.textContent = on ? 'Following' : 'Follow'; }); });
+
+  show('review');
+
+  /* ---------- the 3D phone: drag to turn, tap to use ---------- */
+  var stage = $('#stage'), phone = $('#phone'), hint = $('#hint');
+  var rx = 6, ry = -18, tx = 6, ty = -18, ux = 0, uy = 0, drag = null, moved = false;
+  function fit() {
+    var w = stage.parentNode.clientWidth, h = stage.parentNode.clientHeight;
+    var s = Math.min(1, (h - (innerWidth <= 900 ? 30 : 90)) / 620, (w - 40) / 300);
+    stage.style.setProperty('--s', Math.max(.4, s).toFixed(3));
+  }
+  fit(); addEventListener('resize', fit);
+  stage.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, ux: ux, uy: uy, id: e.pointerId }; moved = false; });
+  addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!moved && Math.hypot(dx, dy) > 6) { moved = true; stage.classList.add('drag'); try { stage.setPointerCapture(e.pointerId); } catch (_) {} hint.style.opacity = 0; }
+    if (moved) { uy = drag.uy + dx * .45; ux = e.pointerType === 'touch' ? drag.ux : Math.max(-35, Math.min(35, drag.ux - dy * .3)); }
+  });
+  function up() { if (drag) { drag = null; stage.classList.remove('drag'); } }
+  addEventListener('pointerup', up); addEventListener('pointercancel', up);
+  stage.addEventListener('click', function (e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+
+  /* ---------- the walkthrough: steps drive the phone ---------- */
+  var steps = $$('.step'), dots = $('#dots');
+  dots.innerHTML = steps.map(function (s, i) { return '<button aria-label="' + s.querySelector('.tag').textContent + '"></button>'; }).join('');
+  var dotBtns = $$('button', dots);
+  dotBtns.forEach(function (b, i) { b.addEventListener('click', function () { steps[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); }); });
+  var active = -1;
+  function setStep(i) {
+    if (i === active) return; active = i;
+    steps.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+    dotBtns.forEach(function (b, j) { b.classList.toggle('on', j === i); });
+    if (i < 0) { tx = 6; ty = -18; show('review'); return; }
+    var p = steps[i].dataset.pose.split(',');
+    ty = +p[0]; tx = +p[1];
+    uy *= .3; ux *= .3;
+    show(steps[i].dataset.scr);
+  }
+  function onScroll() {
+    var mid = innerHeight * (innerWidth <= 900 ? .72 : .5), best = -1;
+    steps.forEach(function (s, j) { var b = s.getBoundingClientRect(); if (b.top < mid && b.bottom > mid) best = j; });
+    if (best === -1 && steps[0].getBoundingClientRect().top > mid) best = -1;
+    else if (best === -1) best = active;
+    setStep(best);
+  }
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* ---------- gyms section ---------- */
+  var cards = SETS.map(function (c, i) { return '<div class="card">' + wallSvg(i + 3, c[2]) + '<div class="cap"><span>' + c[0] + ' / ' + c[1] + '</span><span class="q">' + c[3] + '</span></div></div>'; }).join('');
+  $('#cards').innerHTML = cards + cards;
+  var FOL = ['The Castle', 'BlocFit', 'Stronghold', 'The Arch', 'VauxWall East', 'Yonder', 'The Font', 'Westway', 'Rise Climbing', 'Hackney Wick Boulder Project', 'The Climbing Hangar', 'White Spider'];
+  $('#fchips').innerHTML = FOL.map(function (g) { return '<button class="pill">' + g + '</button>'; }).join('');
+  function countLine() {
+    var on = $$('#fchips .pill.w').map(function (b) { return b.textContent; });
+    $('#fcount').innerHTML = !on.length ? 'Tap your gyms to follow them.' : '<b>Following ' + on.length + (on.length === 1 ? ' gym' : ' gyms') + '.</b> You\'ll hear the day ' + (on.length === 1 ? on[0] + ' resets.' : 'any of them reset.');
+  }
+  $$('#fchips .pill').forEach(function (b) { b.addEventListener('click', function () { b.classList.toggle('w'); countLine(); }); });
+
+  /* ---------- filming viewfinder ---------- */
+  var vf = { lens: .5, ang: '45' }, vfs = $('#vfs');
+  var VERD = {
+    '1': [false, 'Move back. The top hold is out of shot.'],
+    'behind': [false, 'Close. From behind, your hips hide your feet.'],
+    '45': [true, 'Best shot. Hips, feet and the top hold are all in.'],
+    'side': [true, 'Good for hips and reach. Holds are harder to read.']
+  };
+  function vfSet() {
+    $$('#vlens button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === String(vf.lens)); });
+    $$('#vang button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === vf.ang); });
+    var v = vf.lens === 1 ? VERD['1'] : VERD[vf.ang];
+    $('#vfv').classList.toggle('ok', v[0]); $('#vfv span').textContent = v[1];
+    $('#vfz').textContent = vf.lens === 1 ? '1×' : '0.5×';
+    vfs.style.transform = (vf.lens === 1 ? 'scale(1.8) translateY(8%) ' : '') + (vf.ang === '45' ? 'rotateY(38deg)' : vf.ang === 'behind' ? 'rotateY(72deg)' : '');
+  }
+  $$('#vlens button').forEach(function (b) { b.addEventListener('click', function () { vf.lens = +b.dataset.v; vfSet(); }); });
+  $$('#vang button').forEach(function (b) { b.addEventListener('click', function () { vf.ang = b.dataset.v; vfSet(); }); });
+  vfSet();
+
+  /* ---------- coach inbox ---------- */
+  var CL = [['MK', 'Maya', 'Blue V5 / The Arch', 'Drop the hip before the crimp'], ['JO', 'Jonah', 'Purple V3 / BlocFit', 'Feet first on the slab'], ['SA', 'Sam', 'Board 6B / Yonder', 'Straight arm on the sloper']];
+  $('#inbox').innerHTML = CL.map(function (c) { return '<div class="ci"><span class="av">' + c[0] + '</span><span><b>' + c[1] + '</b><small>' + c[2] + '</small><small>Draft: ' + c[3] + '</small></span><button class="pill">Approve</button></div>'; }).join('');
+  $$('#inbox .pill').forEach(function (b) { b.addEventListener('click', function () { b.textContent = 'Sent'; b.classList.add('done'); }); });
+  var fee = 0; $('.book').addEventListener('click', function () { fee = fee ? 0 : 1; $('#youget').textContent = fee ? '£41.40 (8%)' : '£45.00 (month one)'; });
+  $('#youget').textContent = '£45.00 (month one)';
+
+  /* ---------- training: plans built from notes, and the log ---------- */
+  var PLANS = [
+    ['Heel hook day', 'Your last three notes were about the heel.', [['Warm-up traverse', '10 min'], ['Heel-hook drills on the board', '6 × 3'], ['4×4 on the overhang', '20 min'], ['Hamstring curls', '3 × 8']]],
+    ['Takedown day', 'Your last round: head down, hips back.', [['Stance and motion', '3 × 2 min'], ['Hand-fighting rounds', '4 × 3 min'], ['Arm drags to the angle', '5 × 5'], ['Sprawl drills', '3 × 10']]],
+    ['Pull day', 'Your muscle-up stalls at the transition.', [['Scap pulls', '3 × 10'], ['Explosive pull-ups', '5 × 3'], ['Transition drills, low bar', '4 × 5'], ['Hollow holds', '4 × 30s']]]
+  ];
+  function drillHtml(d, cls) { return '<button class="' + cls + '"><span class="ck"></span><span>' + d[0] + '</span><small>' + d[1] + '</small></button>'; }
+  function wireDone(box) { $$('button', box).forEach(function (b) { b.addEventListener('click', function () { b.classList.toggle('done'); }); }); }
+  function plan(i) {
+    var P = PLANS[i]; $('#tname').textContent = P[0]; $('#tbec').textContent = P[1];
+    $('#tdrills').innerHTML = P[2].map(function (d) { return drillHtml(d, 'drill'); }).join(''); wireDone($('#tdrills'));
+    $$('#tsport button').forEach(function (b) { b.classList.toggle('on', +b.dataset.v === i); });
+  }
+  $$('#tsport button').forEach(function (b) { b.addEventListener('click', function () { plan(+b.dataset.v); }); });
+  plan(0);
+  var WEEK = [['MON', [['c', 60]]], ['TUE', [['j', 50]]], ['WED', []], ['THU', [['c', 70], ['x', 20]]], ['FRI', []], ['SAT', [['c', 90]]], ['SUN', [['x', 30]]]];
+  $('#tweek').innerHTML = WEEK.map(function (d) { return '<div>' + d[1].map(function (b) { return '<i class="' + b[0] + '" style="height:' + b[1] + 'px"></i>'; }).join('') + (d[1].length ? '' : '<i style="height:6px"></i>') + '<span>' + d[0] + '</span></div>'; }).join('');
+  $('#pdrills').innerHTML = PLANS[0][2].map(function (d) { return drillHtml(d, 'pdr'); }).join(''); wireDone($('#pdrills'));
+  var pst = null;
+  $('#pstart').addEventListener('click', function () {
+    var b = this; if (pst) { clearInterval(pst); pst = null; b.textContent = 'Start session'; return; }
+    var t0 = Date.now(); b.textContent = 'In session 0:00 / tap to stop';
+    pst = setInterval(function () { b.textContent = 'In session ' + tc((Date.now() - t0) / 1000) + ' / tap to stop'; }, 500);
+  });
+
+  /* ---------- better than the eye ---------- */
+  var eyev = $('#eyev'), esvg = $('#eyes'), escrub = $('#escrub'), emode = 'grip', eT = 0, ePlay = true, eLast = 0;
+  function eyeMode(m) {
+    emode = m; eyev.classList.toggle('blur', m === 'eye'); ePlay = true;
+    $$('#emode button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === m); });
+    $('#ecap').textContent = m === 'eye' ? 'Real speed, from the mat. It looked fine. Grip says the hips were 9cm further out than your best go.' : 'Slowed to a third. Drag the bar to step through it frame by frame. The dashed climber is your best go.';
+  }
+  $$('#emode button').forEach(function (b) { b.addEventListener('click', function () { eyeMode(b.dataset.v); }); });
+  escrub.addEventListener('input', function () { ePlay = false; if (emode === 'eye') eyeMode('grip'), ePlay = false; eT = escrub.value / 30; });
+  eyev.addEventListener('click', function () { ePlay = !ePlay; });
+  eyev.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ePlay = !ePlay; } });
+  function eyeFrame(now) {
+    var dt = Math.min(.1, (now - (eLast || now)) / 1000); eLast = now;
+    if (ePlay) eT = (eT + dt * (emode === 'eye' ? 1 : .34)) % HOOK.len;
+    var g = emode === 'grip';
+    pScene(esvg, 'hook', eT, { ann: g, ghost: g, trail: g });
+    var fr = Math.floor(eT * 30); if (ePlay) escrub.value = fr;
+    $('#etc').textContent = g ? 'FRAME ' + fr + ' / 330' : 'REAL TIME';
+    var st = hookStats(eT), nt = CLIP.filter(function (n) { return eT >= n[0]; }).pop();
+    $('#r1').textContent = g ? Math.round(st.knee) + '°' : '?'; $('#r2').textContent = g ? Math.round(st.cm) + 'cm' : '?';
+    $('#r3').textContent = g ? Math.round(st.cm - 9) + 'cm' : '?'; $('#r4').textContent = g ? Math.round(st.lock) + '°' : '?';
+    $('#enote').textContent = g ? (nt ? nt[1] : 'Match the hold, feet set.') : 'Looks fine?';
+  }
+
+  /* pricing: monthly or yearly */
+  $$('#bill button').forEach(function (b) { b.addEventListener('click', function () {
+    var y = b.dataset.v === 'y'; $$('#bill button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    $('#pamt').textContent = y ? '£34.99' : '£4.99'; $('#pper').textContent = y ? 'a year, under £3 a month' : 'a month';
+  }); });
+
+  /* ---------- one loop draws only what is on screen ---------- */
+  var vis = { stage: true, vf: false, eyev: false, spc: false };
+  if ('IntersectionObserver' in window) {
+    var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { vis[e.target.id] = e.isIntersecting; }); });
+    vio.observe(stage); vio.observe($('#vf')); vio.observe(eyev); vio.observe($('#spc'));
+  }
+  var pv = $('#pv'), pc = $('#pc'), spc = $('#spc'), sptri = $('#sptri'), spmu = $('#spmu');
+  function frame(now) {
+    var t = now / 1000;
+    if (vis.stage) {
+      if (!drag) { uy *= .985; ux *= .985; }
+      rx += (tx + ux - rx) * .07; ry += (ty + uy - ry) * .07;
+      var fl = reduce ? 0 : Math.sin(t * .9) * 4;
+      phone.style.transform = 'rotateX(' + (rx + fl * .4).toFixed(2) + 'deg) rotateY(' + (ry + fl).toFixed(2) + 'deg) translateY(' + (fl * 1.5).toFixed(1) + 'px)';
+      if (cur === 'review') {
+        var ct = clipTime(), on = -1;
+        pScene(pv, 'hook', ct, {});
+        ptc.textContent = tc(ct) + ' / 0:11';
+        pfill.style.width = (ct / LEN * 100) + '%';
+        CLIP.forEach(function (n, j) { if (ct >= n[0] && ct < n[0] + 2) on = j; });
+        nts.forEach(function (el, j) { el.classList.toggle('on', j === on || (on === -1 && j === 1 && $('#s-review').classList.contains('ratefocus'))); });
+        if (on > -1) ppin.textContent = CLIP[on][1];
+        ppin.classList.toggle('on', on > -1);
+      } else if (cur === 'film') {
+        pScene(pc, 'hook', t, {});
+        timer.textContent = recOn ? tc((now - recT) / 1000) : '0:00';
+      }
+    }
+    if (vis.vf) pScene(vfs, 'hook', t, {});
+    if (vis.eyev) eyeFrame(now); else eLast = 0;
+    if (vis.spc) { pScene(spc, 'hook', t, { ann: true }); pScene(sptri, 'tri', t, { ann: true }); pScene(spmu, 'mu', t, { ann: true }); }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</html>

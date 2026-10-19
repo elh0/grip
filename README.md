@@ -61,3 +61,7 @@ CI runs all three on every push and pull request.
 
 Secrets live in `.env` files only (both are git-ignored; see the `.env.example` files).
 The worker uses the Supabase service-role key. The app only ever gets the anon key.
+
+## Website
+
+The g-r-i-p.com launch page lives in `website/`. `python3 website/build.py` builds `website/index.html` from `site-v8.html` (layout), `pose.js` (the tracked heel hook, takedown and muscle-up) and the brand files in `brand/`. No dependencies.
