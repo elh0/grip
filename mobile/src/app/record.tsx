@@ -15,6 +15,13 @@ import type { ClimbResult } from '@/lib/types';
 import { uploadSession } from '@/lib/upload';
 
 const tip = 'Film side-on or at 45°. From directly behind, your hips are hidden.';
+/** Learned the hard way at BlocFit: gyms are cramped, so prop the phone and go wide. */
+const HOW_TO_FILM = [
+  'Prop the phone on the mat edge, a rail or your bag. Don\'t hold it.',
+  'Use 0.5× and get as far back as the room allows.',
+  'Side-on or at 45°, with the start and top hold both in shot.',
+  'Rough is fine. If we only see part of the climb, the notes say so.',
+];
 
 type Step = 'setup' | 'camera' | 'ready' | 'uploading';
 
@@ -95,6 +102,13 @@ export default function Record() {
     return (
       <View style={styles.dark}>
         <CameraView ref={camera} style={StyleSheet.absoluteFill} mode="video" facing="back" videoQuality="1080p" />
+        {!recording ? (
+          <View pointerEvents="none" style={[styles.guide, { top: insets.top + space(14) }]}>
+            <Text variant="label" tone="dark" style={styles.center}>
+              Start and top hold inside the box
+            </Text>
+          </View>
+        ) : null}
         <View style={[styles.cameraBar, { paddingBottom: insets.bottom + space(6) }]}>
           <Text variant="label" tone="dark" style={styles.center}>
             {recording ? 'Recording' : tip}
@@ -127,7 +141,16 @@ export default function Record() {
         ) : null}
       </View>
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <Text quiet>{tip}</Text>
+        <View style={styles.how}>
+          <Text variant="label" quiet>
+            How to film
+          </Text>
+          {HOW_TO_FILM.map((h) => (
+            <Text key={h} quiet>
+              {h}
+            </Text>
+          ))}
+        </View>
         <Text variant="label" quiet>
           Gym
         </Text>
@@ -212,6 +235,7 @@ const styles = StyleSheet.create({
     paddingBottom: space(3),
   },
   body: { padding: space(5), gap: space(3) },
+  how: { gap: space(1), padding: space(4), borderRadius: 6, backgroundColor: color.tile },
   field: {
     ...type.body,
     color: color.dark.text,
@@ -232,6 +256,18 @@ const styles = StyleSheet.create({
   bar: { height: 2, backgroundColor: color.dark.rule },
   barFill: { height: 2, backgroundColor: color.white },
   actions: { paddingHorizontal: space(5), gap: space(3) },
+  guide: {
+    position: 'absolute',
+    left: space(6),
+    right: space(6),
+    bottom: 200,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(243,243,240,0.6)',
+    borderRadius: 6,
+    justifyContent: 'flex-end',
+    paddingBottom: space(2),
+  },
   cameraBar: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: space(4), paddingHorizontal: space(5) },
   center: { textAlign: 'center' },
   shutter: { width: 76, height: 76, borderRadius: 38, borderWidth: 2, borderColor: color.white, alignItems: 'center', justifyContent: 'center' },
