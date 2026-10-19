@@ -8,6 +8,7 @@ import tempfile
 import time
 from pathlib import Path
 
+from . import share
 from .analyze import Analysis, analyze
 from .config import Settings
 from .critique import CoachContext, CritiqueError
@@ -17,6 +18,7 @@ from .sports import get_sport
 
 log = logging.getLogger("coach_worker")
 MAX_ATTEMPTS = 3
+SHARE_BUCKET = "shares"
 
 
 def make_client(settings: Settings):
@@ -75,10 +77,30 @@ def process_job(job: dict, db: Supabase, settings: Settings, client=None) -> Non
         db.update_session(sid, status="done", summary=analysis.critique.summary,
                           duration_s=round(meta.duration, 2))
 
-    n = len(analysis.critique.notes)
-    db.push(profile.get("push_token"), "Your review is ready",
-            f"{n} note{'s' if n != 1 else ''} on your session." if n else "No notes this time.",
-            {"sessionId": sid})
+        n = len(analysis.critique.notes)
+        db.push(profile.get("push_token"), "Your review is ready",
+                f"{n} note{'s' if n != 1 else ''} on your session." if n else "No notes this time.",
+                {"sessionId": sid})
+
+        # After the push: the review is what they're waiting for, the share can follow.
+        if session["sport"] == "climbing":
+            share_session(db, settings, video, uid, sid, work / "share")
+
+
+def share_session(db: Supabase, settings: Settings, video: Path, uid: str, sid: str,
+                  work: Path) -> str | None:
+    """Render, upload and record the shareable tracked clip. Never fails the job."""
+    try:
+        out = share.make_share(video, work / "share.mp4", settings.pose_model_path, work)
+        if not out:
+            return None
+        path = db.upload(SHARE_BUCKET, f"{uid}/{sid}.mp4", out, content_type="video/mp4")
+        db.update_session(sid, share_path=path)
+        log.info("share for session %s at %s/%s", sid, SHARE_BUCKET, path)
+        return path
+    except Exception:  # noqa: BLE001 - a missing share never fails the review
+        log.exception("share for session %s failed", sid)
+        return None
 
 
 def run_once(db: Supabase, settings: Settings, client=None) -> bool:

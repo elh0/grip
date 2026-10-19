@@ -103,34 +103,40 @@ def measure(pf: PoseFrame) -> PoseFrame:
     return pf
 
 
-def draw_wireframe(image_path: Path, pf: PoseFrame, out_path: Path,
-                   trail: list[tuple[float, float]] | None = None) -> Path:
-    """Hairline blue wireframe, joints as open dots, plus the centre-of-mass trail."""
-    with Image.open(image_path) as src:
-        im = src.convert("RGB")
-    w, h = im.size
-    draw = ImageDraw.Draw(im)
-    line = max(1, w // 400)
-    r = max(3, w // 160)
+def draw_pose(draw: ImageDraw.ImageDraw, size: tuple[int, int], pf: PoseFrame,
+              trail: list[tuple[float, float]] | None = None, fill=MAT_BLUE,
+              line: int | None = None, r: int | None = None) -> None:
+    """Hairline wireframe, joints as open dots, the centre-of-mass trail and centre line."""
+    w, h = size
+    line = line or max(1, w // 400)
+    r = r or max(3, w // 160)
 
     def xy(p: Point) -> tuple[float, float]:
         return (p.x * w, p.y * h)
 
     if trail and len(trail) > 1:
-        draw.line([(x * w, y * h) for x, y in trail], fill=MAT_BLUE, width=line)
+        draw.line([(x * w, y * h) for x, y in trail], fill=fill, width=line, joint="curve")
     for a, b in BONES:
         pa, pb = pf.visible(a), pf.visible(b)
         if pa and pb:
-            draw.line([xy(pa), xy(pb)], fill=MAT_BLUE, width=line)
+            draw.line([xy(pa), xy(pb)], fill=fill, width=line)
     for name in POINTS:
         p = pf.visible(name)
         if p:
             x, y = xy(p)
-            draw.ellipse([x - r, y - r, x + r, y + r], outline=MAT_BLUE, width=line)
+            draw.ellipse([x - r, y - r, x + r, y + r], outline=fill, width=line)
     if pf.com:
         x, y = pf.com[0] * w, pf.com[1] * h
         # centre line: dropped from the weight to the floor
-        draw.line([(x, y), (x, h)], fill=MAT_BLUE, width=line)
+        draw.line([(x, y), (x, h)], fill=fill, width=line)
+
+
+def draw_wireframe(image_path: Path, pf: PoseFrame, out_path: Path,
+                   trail: list[tuple[float, float]] | None = None) -> Path:
+    """The wireframe drawn onto a keyframe."""
+    with Image.open(image_path) as src:
+        im = src.convert("RGB")
+    draw_pose(ImageDraw.Draw(im), im.size, pf, trail)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     im.save(out_path, quality=88)
     return out_path

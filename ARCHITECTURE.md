@@ -54,7 +54,16 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
    Without an API key it returns the strongest tracker flags instead (offline mode).
 
 `main.py` is the job loop; `cli.py` (`grip-coach`) runs one clip with no database and writes
-`critique.json`, the keyframes and `report.html`.
+`critique.json`, the keyframes and `report.html` (`--share` adds `share.mp4`).
+
+Share clip (`share.py`): after every successful climbing review, once the athlete has been
+pushed, the worker renders the whole clip (first 60 s, long side ≤ 1080 px, 30 fps H.264
+yuv420p +faststart, source audio kept as AAC) with the blue tracking on every frame. Pose runs at
+15 fps, is smoothed and interpolated in between, and never morphs between two people. There is a
+small white `grip` wordmark bottom right, rasterised from the brand path, and nothing else. It goes to
+the private `shares` bucket at `<user_id>/<session_id>.mp4` and `sessions.share_path` is set.
+No pose (MediaPipe missing, `POSE_MODEL_PATH` unset, no body found) means no share. Any render or
+upload error is logged and never fails the review.
 
 ## App (`mobile/src/`)
 

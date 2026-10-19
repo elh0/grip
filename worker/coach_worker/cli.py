@@ -4,6 +4,7 @@
 
 Writes critique.json, the keyframes the coach saw (with the wireframe when pose runs)
 and a small report.html. Without ANTHROPIC_API_KEY it runs offline (tracker flags only).
+--share also writes share.mp4, the tracked clip (needs pose: POSE_MODEL_PATH).
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import html
 import json
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 from .analyze import analyze
@@ -20,6 +22,7 @@ from .config import Settings
 from .critique import CoachContext, fmt_time
 from .frames import probe
 from .main import make_client
+from .share import make_share
 from .sports import get_sport
 
 
@@ -33,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--injuries")
     ap.add_argument("--out", type=Path, default=Path("out"))
     ap.add_argument("--offline", action="store_true", help="skip the Claude call")
+    ap.add_argument("--share", action="store_true", help="also render share.mp4")
     args = ap.parse_args(argv)
 
     if not args.video.is_file():
@@ -74,6 +78,12 @@ def main(argv: list[str] | None = None) -> int:
     for n in analysis.critique.notes:
         print(f"{fmt_time(n.t_seconds)}  {n.body_part}: {n.observation} -> {n.cue}")
     print(f"\nwrote {out / 'critique.json'} and {out / 'report.html'}", file=sys.stderr)
+
+    if args.share:
+        with tempfile.TemporaryDirectory(prefix="grip-share-") as tmp:
+            made = make_share(args.video, out / "share.mp4", settings.pose_model_path, Path(tmp))
+        print(f"wrote {made}" if made else "share skipped: no pose (set POSE_MODEL_PATH and "
+              "pip install -e \".[pose]\") or no body found", file=sys.stderr)
     return 0
 
 

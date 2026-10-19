@@ -84,13 +84,14 @@ class FakeDB:
     def __init__(self, clip: Path, job=None):
         self.clip, self.job = clip, job
         self.updates, self.feedback, self.uploads, self.finished, self.pushes = [], [], [], [], []
+        self.uploads_typed, self.shared, self.sport = [], [], "climbing"
 
     def claim_job(self, worker_id, max_attempts):
         job, self.job = self.job, None
         return job
 
     def get_session(self, sid):
-        return {"id": sid, "user_id": "u1", "sport": "climbing", "video_path": "u1/s1.mp4",
+        return {"id": sid, "user_id": "u1", "sport": self.sport, "video_path": "u1/s1.mp4",
                 "athlete_note": None}
 
     def get_profile(self, uid):
@@ -103,8 +104,12 @@ class FakeDB:
         dest.write_bytes(self.clip.read_bytes())
         return dest
 
-    def upload(self, bucket, path, src):
-        self.uploads.append((bucket, path))
+    def upload(self, bucket, path, src, content_type="image/jpeg"):
+        if bucket == "frames":
+            self.uploads.append((bucket, path))
+        else:
+            self.shared.append(src.read_bytes())
+        self.uploads_typed.append((bucket, path, content_type))
         return path
 
     def replace_feedback(self, sid, rows):
