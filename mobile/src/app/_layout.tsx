@@ -4,9 +4,10 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { Opening } from '@/components/opening';
 import { color } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { GymsProvider } from '@/lib/gyms';
@@ -43,6 +44,8 @@ function Gate() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ HostGrotesk_400Regular, DMMono_400Regular });
+  const [opening, setOpening] = useState(true);
+  const endOpening = useCallback(() => setOpening(false), []);
 
   useEffect(() => {
     if (fontsLoaded) SplashScreen.hideAsync().catch(() => undefined);
@@ -56,6 +59,7 @@ export default function RootLayout() {
         <GymsProvider>
           <Gate />
         </GymsProvider>
+        {opening && <Opening onDone={endOpening} />}
       </AuthProvider>
     </SafeAreaProvider>
   );
