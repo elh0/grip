@@ -5,21 +5,16 @@ import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Chip, ChipRow } from '@/components/chip';
+import { GymField } from '@/components/gym-picker';
 import { PillButton } from '@/components/pill-button';
 import { Text } from '@/components/text';
 import { color, space, type } from '@/constants/theme';
-import { sportLabel } from '@/lib/feedback';
-import type { Sport } from '@/lib/types';
+import { COLOURS, GRADES, RESULTS } from '@/lib/climb';
+import type { ClimbResult } from '@/lib/types';
 import { uploadSession } from '@/lib/upload';
 
-const tips: Record<Sport, string> = {
-  climbing: 'Film side-on or at 45°. From directly behind, your hips are hidden.',
-  bjj: 'Film from the side of the mat with both of you in frame the whole time.',
-};
-const notePlaceholder: Record<Sport, string> = {
-  climbing: 'Anything to watch? e.g. "the crux is 0:12 to 0:18"',
-  bjj: 'Which one is you? e.g. "I\'m in the blue gi"',
-};
+const tip = 'Film side-on or at 45°. From directly behind, your hips are hidden.';
 
 type Step = 'setup' | 'camera' | 'ready' | 'uploading';
 
@@ -31,7 +26,11 @@ export default function Record() {
   const [micPerm, requestMic] = useMicrophonePermissions();
 
   const [step, setStep] = useState<Step>('setup');
-  const [sport, setSport] = useState<Sport>('climbing');
+  const [gymId, setGymId] = useState<string | null>(null);
+  const [wall, setWall] = useState('');
+  const [colour, setColour] = useState<string | null>(null);
+  const [grade, setGrade] = useState<string | null>(null);
+  const [result, setResult] = useState<ClimbResult | null>(null);
   const [note, setNote] = useState('');
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
@@ -84,7 +83,7 @@ export default function Record() {
     setStep('uploading');
     setError(null);
     try {
-      const session = await uploadSession({ sport, videoUri, note }, setProgress);
+      const session = await uploadSession({ videoUri, note, gymId, wall, colour, grade, result }, setProgress);
       router.replace({ pathname: '/session/[id]', params: { id: session.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed.');
@@ -98,7 +97,7 @@ export default function Record() {
         <CameraView ref={camera} style={StyleSheet.absoluteFill} mode="video" facing="back" videoQuality="1080p" />
         <View style={[styles.cameraBar, { paddingBottom: insets.bottom + space(6) }]}>
           <Text variant="label" tone="dark" style={styles.center}>
-            {recording ? 'Recording' : tips[sport]}
+            {recording ? 'Recording' : tip}
           </Text>
           <Pressable
             accessibilityRole="button"
@@ -120,7 +119,7 @@ export default function Record() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + space(3) }]}>
       <View style={styles.topRow}>
-        <Text variant="label">New session</Text>
+        <Text variant="label">Film a climb</Text>
         {step !== 'uploading' ? (
           <Text variant="label" quiet onPress={() => router.back()} accessibilityRole="button">
             Close
@@ -128,27 +127,48 @@ export default function Record() {
         ) : null}
       </View>
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.segment}>
-          {(['climbing', 'bjj'] as Sport[]).map((s) => (
-            <Pressable
-              key={s}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: sport === s }}
-              disabled={step === 'uploading'}
-              onPress={() => setSport(s)}
-              style={[styles.segmentItem, sport === s && styles.segmentOn]}>
-              <Text variant="label" style={{ color: sport === s ? color.black : color.white }}>
-                {sportLabel[s]}
-              </Text>
-            </Pressable>
+        <Text quiet>{tip}</Text>
+        <Text variant="label" quiet>
+          Gym
+        </Text>
+        <GymField value={gymId} onChange={setGymId} />
+        <TextInput
+          value={wall}
+          onChangeText={setWall}
+          editable={step !== 'uploading'}
+          placeholder="Wall, e.g. Cave"
+          placeholderTextColor={color.dark.quiet}
+          style={styles.field}
+        />
+        <Text variant="label" quiet>
+          Colour
+        </Text>
+        <ChipRow>
+          {COLOURS.map((c) => (
+            <Chip key={c.id} label={c.id} dot={c.hex} on={colour === c.id} onPress={() => setColour(colour === c.id ? null : c.id)} />
           ))}
-        </View>
-        <Text quiet>{tips[sport]}</Text>
+        </ChipRow>
+        <Text variant="label" quiet>
+          Grade
+        </Text>
+        <ChipRow>
+          {GRADES.map((g) => (
+            <Chip key={g} label={g} on={grade === g} onPress={() => setGrade(grade === g ? null : g)} />
+          ))}
+        </ChipRow>
+        <Text variant="label" quiet>
+          How did it go
+        </Text>
+        <ChipRow>
+          {RESULTS.map((r) => (
+            <Chip key={r.id} label={r.label} on={result === r.id} onPress={() => setResult(result === r.id ? null : r.id)} />
+          ))}
+        </ChipRow>
         <TextInput
           value={note}
           onChangeText={setNote}
           editable={step !== 'uploading'}
-          placeholder={notePlaceholder[sport]}
+          placeholder='Anything to watch? e.g. "the crux is 0:12 to 0:18"'
           placeholderTextColor={color.dark.quiet}
           multiline
           style={styles.input}
@@ -191,10 +211,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: space(5),
     paddingBottom: space(3),
   },
-  body: { padding: space(5), gap: space(4) },
-  segment: { flexDirection: 'row', borderWidth: 1, borderColor: color.white, borderRadius: 999, overflow: 'hidden' },
-  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: space(3) },
-  segmentOn: { backgroundColor: color.white },
+  body: { padding: space(5), gap: space(3) },
+  field: {
+    ...type.body,
+    color: color.dark.text,
+    minHeight: 48,
+    paddingHorizontal: space(4),
+    borderRadius: 6,
+    backgroundColor: color.tile,
+  },
   input: {
     ...type.body,
     color: color.dark.text,

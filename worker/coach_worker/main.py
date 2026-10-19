@@ -101,6 +101,15 @@ def run_once(db: Supabase, settings: Settings, client=None) -> bool:
     return True
 
 
+def send_alerts(db: Supabase) -> int:
+    """Push queued new-set alerts to followers. Returns how many were handled."""
+    alerts = db.unsent_alerts()
+    for a in alerts:
+        db.push(a.get("push_token"), a["title"], a["body"], a.get("data") or {})
+    db.mark_alerts_sent([a["id"] for a in alerts])
+    return len(alerts)
+
+
 def run() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     settings = Settings.from_env()
@@ -120,6 +129,7 @@ def run() -> None:
     while not stopping:
         try:
             busy = run_once(db, settings, client)
+            busy = send_alerts(db) > 0 or busy
         except Exception:  # noqa: BLE001 - keep the loop alive through network blips
             log.exception("poll failed")
             busy = False

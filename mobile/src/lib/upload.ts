@@ -1,13 +1,17 @@
 import { File } from 'expo-file-system';
 
 import { supabase } from './supabase';
-import type { Session, Sport } from './types';
+import type { ClimbResult, Session } from './types';
 
 export interface NewSession {
-  sport: Sport;
   videoUri: string;
   note?: string;
   title?: string;
+  gymId?: string | null;
+  wall?: string;
+  colour?: string | null;
+  grade?: string | null;
+  result?: ClimbResult | null;
 }
 
 export function videoObjectPath(userId: string, sessionId: string, uri: string): string {
@@ -34,7 +38,12 @@ export async function uploadSession(
     .from('sessions')
     .insert({
       user_id: userId,
-      sport: input.sport,
+      sport: 'climbing', // BJJ is parked until the climbing version works
+      gym_id: input.gymId ?? null,
+      wall: input.wall?.trim() || null,
+      colour: input.colour ?? null,
+      grade: input.grade ?? null,
+      result: input.result ?? null,
       athlete_note: input.note?.trim() || null,
       title: input.title?.trim() || null,
     })

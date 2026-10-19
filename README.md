@@ -1,8 +1,9 @@
 # grip
 
-An AI coach for climbers and grapplers. Film a board session or a jiu-jitsu roll, upload it,
-and get back at most three timestamped notes, each tied to a body part, with a cue and a drill.
-Climbing board first, BJJ second.
+An AI coach for boulderers, London first. Film a climb, upload it, and get back at most three
+timestamped notes, each tied to a body part, with a cue and a drill; rate each one. A free
+New sets feed shows photos of fresh walls at the gyms you follow, with an alert when one goes up.
+Climbing only for now; the worker still has BJJ code, parked for a later version.
 
 | Folder | What |
 |---|---|

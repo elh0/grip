@@ -1,7 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Header } from '@/components/header';
 import { PillButton } from '@/components/pill-button';
@@ -16,7 +15,6 @@ type Row = Session & { feedback_items: { count: number }[] };
 
 export default function Sessions() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { session: auth } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,18 +76,18 @@ export default function Sessions() {
         ListEmptyComponent={
           loading ? null : (
             <View style={styles.empty}>
-              <Text variant="title">No sessions yet.</Text>
+              <Text variant="title">No climbs yet.</Text>
               <Text quiet>
-                Film a board problem side-on, or a roll from the edge of the mat. You get at most
-                three notes back, each pinned to a moment.
+                Film a problem side-on or at 45 degrees. You get three notes back, each pinned to a
+                moment, and you can tell us if they landed.
               </Text>
             </View>
           )
         }
-        contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
+        contentContainerStyle={{ paddingBottom: 96 }}
       />
-      <View style={[styles.fab, { bottom: insets.bottom + space(4) }]}>
-        <PillButton label="New session" onPress={() => router.push('/record')} />
+      <View style={[styles.fab, { bottom: space(4) }]}>
+        <PillButton label="Film a climb" onPress={() => router.push('/record')} />
       </View>
     </View>
   );

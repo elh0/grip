@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { color } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { GymsProvider } from '@/lib/gyms';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -30,10 +31,12 @@ function Gate() {
         headerShown: false,
         contentStyle: { backgroundColor: color.dark.bg },
       }}>
-      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="record" options={{ presentation: 'fullScreenModal' }} />
+      <Stack.Screen name="post-set" options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="session/[id]" />
+      <Stack.Screen name="gym/[id]" />
     </Stack>
   );
 }
@@ -50,7 +53,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <StatusBar style="light" />
-        <Gate />
+        <GymsProvider>
+          <Gate />
+        </GymsProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

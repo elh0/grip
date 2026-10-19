@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Apply the migration to a throwaway Postgres database with Supabase stubs, then run checks.
+# Apply the migrations to a throwaway Postgres database with Supabase stubs, then run checks.
 # Usage: PGURL=postgres://user@localhost/postgres supabase/tests/run.sh
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -10,3 +10,5 @@ url="${PGURL%/*}/$db"
 psql "$url" -q -v ON_ERROR_STOP=1 -f "$here/stubs.sql"
 psql "$url" -q -v ON_ERROR_STOP=1 -f "$here/../migrations/0001_init.sql"
 psql "$url" -q -v ON_ERROR_STOP=1 -f "$here/test.sql"
+psql "$url" -q -v ON_ERROR_STOP=1 -f "$here/../migrations/0002_gyms_sets.sql"
+psql "$url" -q -v ON_ERROR_STOP=1 -f "$here/test_0002.sql"

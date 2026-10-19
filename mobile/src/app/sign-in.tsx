@@ -47,7 +47,7 @@ export default function SignIn() {
       style={[styles.screen, { paddingTop: insets.top + space(6), paddingBottom: insets.bottom + space(6) }]}>
       <Wordmark height={20} />
       <View style={styles.body}>
-        <Text variant="display">Film a climb or a roll. Get three notes back.</Text>
+        <Text variant="display">Film a climb. Get three notes back.</Text>
         <Text quiet>
           {sent ? `We sent a code to ${email.trim()}.` : 'Sign in with your email. We send a code, no password.'}
         </Text>

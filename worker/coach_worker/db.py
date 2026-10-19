@@ -79,6 +79,26 @@ class Supabase:
         r.raise_for_status()
         return object_path
 
+    # -- New-set alerts --------------------------------------------------------
+    def unsent_alerts(self, limit: int = 100) -> list[dict]:
+        """Oldest unsent alerts, each with the follower's push token."""
+        rows = self._rest("GET", "push_outbox", params={
+            "sent_at": "is.null", "order": "created_at", "limit": str(limit),
+            "select": "id,user_id,title,body,data"})
+        if not rows:
+            return []
+        ids = ",".join(sorted({r["user_id"] for r in rows}))
+        profiles = self._rest("GET", "profiles",
+                              params={"id": f"in.({ids})", "select": "id,push_token"}) or []
+        tokens = {p["id"]: p.get("push_token") for p in profiles}
+        return [{**r, "push_token": tokens.get(r["user_id"])} for r in rows]
+
+    def mark_alerts_sent(self, ids: list[int]) -> None:
+        if ids:
+            self._rest("PATCH", "push_outbox",
+                       params={"id": f"in.({','.join(str(i) for i in ids)})"},
+                       json={"sent_at": datetime.now(UTC).isoformat()})
+
     # -- Push ------------------------------------------------------------------
     def push(self, token: str | None, title: str, body: str, data: dict) -> None:
         if not token:

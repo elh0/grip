@@ -6,12 +6,16 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CueCard } from '@/components/cue-card';
+import { NoteRating } from '@/components/note-rating';
 import { Text } from '@/components/text';
 import { Timeline } from '@/components/timeline';
 import { color, space } from '@/constants/theme';
-import { activeNote, formatTime, isPending, orderNotes, sessionTitle, sportLabel } from '@/lib/feedback';
+import { placeLabel, resultLabel } from '@/lib/climb';
+import { activeNote, formatTime, isPending, orderNotes, sessionTitle } from '@/lib/feedback';
+import { useGyms } from '@/lib/gyms';
+import { loadRatings, rateNote } from '@/lib/ratings';
 import { supabase } from '@/lib/supabase';
-import type { FeedbackItem, Session } from '@/lib/types';
+import type { FeedbackItem, NoteRating as Rating, Session } from '@/lib/types';
 import { deleteSession, signedUrl } from '@/lib/upload';
 
 const waiting: Record<string, string> = {
@@ -27,6 +31,8 @@ export default function SessionScreen() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [frameUrls, setFrameUrls] = useState<Record<string, string>>({});
+  const [ratings, setRatings] = useState<Record<string, Rating>>({});
+  const { byId } = useGyms();
 
   const load = useCallback(async () => {
     const [{ data: s }, { data: f }] = await Promise.all([
@@ -45,7 +51,14 @@ export default function SessionScreen() {
         }),
     );
     setFrameUrls(urls);
+    setRatings(await loadRatings(notes.map((n) => n.id)).catch(() => ({})));
   }, [id]);
+
+  function rate(itemId: string, vote: 'up' | 'down', why?: string) {
+    const prev = ratings[itemId];
+    setRatings((r) => ({ ...r, [itemId]: { feedback_item_id: itemId, user_id: prev?.user_id ?? '', vote, why: why?.trim() || null } }));
+    rateNote(itemId, vote, why).catch(() => setRatings((r) => ({ ...r, [itemId]: prev })));
+  }
 
   useEffect(() => {
     // Initial fetch, then refetch on every change; state is only set after the await.
@@ -123,7 +136,14 @@ export default function SessionScreen() {
       <Timeline items={items} duration={duration} position={currentTime} onSeek={seek} />
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space(8) }]}>
         <Text variant="label" tone="dark" quiet>
-          {sportLabel[session.sport]}   {duration ? formatTime(duration) : ''}
+          {[
+            placeLabel(session.gym_id ? byId[session.gym_id] : undefined, session.wall) ?? 'Climb',
+            session.grade,
+            resultLabel(session.result),
+            duration ? formatTime(duration) : '',
+          ]
+            .filter(Boolean)
+            .join('   ')}
         </Text>
         <Text variant="title" tone="dark">
           {sessionTitle(session)}
@@ -138,13 +158,15 @@ export default function SessionScreen() {
         ) : null}
         {session.summary ? <Text tone="dark">{session.summary}</Text> : null}
         {items.map((item) => (
-          <CueCard
-            key={item.id}
-            item={item}
-            frameUrl={frameUrls[item.id]}
-            active={active?.id === item.id}
-            onPress={() => seek(item.t_seconds)}
-          />
+          <View key={item.id} style={styles.note}>
+            <CueCard
+              item={item}
+              frameUrl={frameUrls[item.id]}
+              active={active?.id === item.id}
+              onPress={() => seek(item.t_seconds)}
+            />
+            <NoteRating rating={ratings[item.id]} onRate={(vote, why) => rate(item.id, vote, why)} />
+          </View>
         ))}
       </ScrollView>
     </View>
@@ -157,4 +179,5 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space(5), paddingBottom: space(3) },
   video: { width: '100%', aspectRatio: 16 / 9, backgroundColor: color.black },
   body: { padding: space(5), gap: space(3) },
+  note: { gap: space(2) },
 });

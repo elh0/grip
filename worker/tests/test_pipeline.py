@@ -143,3 +143,24 @@ def test_job_loop_retries_transient_errors(clip):
     worker.run_once(db, SETTINGS)
     assert db.finished[0][:2] == (False, True)
     assert db.updates[-1]["status"] == "analyzing"
+
+
+def test_send_alerts_pushes_each_and_marks_sent():
+    class AlertDB:
+        def __init__(self):
+            self.pushes, self.marked = [], []
+
+        def unsent_alerts(self):
+            return [{"id": 5, "push_token": "tok", "title": "New set at Yonder", "body": "b",
+                     "data": {"gymId": "yonder"}},
+                    {"id": 6, "push_token": None, "title": "t", "body": "b", "data": {}}]
+
+        def push(self, token, title, body, data):
+            self.pushes.append((token, title))
+
+        def mark_alerts_sent(self, ids):
+            self.marked = ids
+
+    db = AlertDB()
+    assert worker.send_alerts(db) == 2
+    assert db.pushes[0] == ("tok", "New set at Yonder") and db.marked == [5, 6]

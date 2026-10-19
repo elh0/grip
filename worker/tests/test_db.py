@@ -74,3 +74,24 @@ def test_push_swallows_errors():
 
     make(handler).push("tok", "t", "b", {})  # no exception
     make(handler).push(None, "t", "b", {})
+
+
+def test_unsent_alerts_joins_push_tokens_and_marks_sent():
+    calls = []
+
+    def handler(req):
+        calls.append((req.method, req.url.path, dict(req.url.params)))
+        if req.url.path.endswith("push_outbox") and req.method == "GET":
+            return httpx.Response(200, json=[
+                {"id": 1, "user_id": "u1", "title": "New set at BlocFit", "body": "b", "data": {}},
+                {"id": 2, "user_id": "u2", "title": "New set at BlocFit", "body": "b", "data": {}}])
+        if req.url.path.endswith("profiles"):
+            return httpx.Response(200, json=[{"id": "u1", "push_token": "tok1"}])
+        return httpx.Response(204)
+
+    db = make(handler)
+    alerts = db.unsent_alerts()
+    assert [a["push_token"] for a in alerts] == ["tok1", None]
+    assert calls[1][2]["id"] == "in.(u1,u2)"
+    db.mark_alerts_sent([1, 2])
+    assert calls[-1][0] == "PATCH" and calls[-1][2]["id"] == "in.(1,2)"

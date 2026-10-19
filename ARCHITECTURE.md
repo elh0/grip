@@ -59,12 +59,24 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 ## App (`mobile/src/`)
 
 - `app/sign-in.tsx`: email one-time code.
-- `app/index.tsx`: sessions list with live status.
-- `app/record.tsx`: pick Climb or Roll, add a note, film (expo-camera) or choose a clip
-  (expo-image-picker), upload with progress (expo-file-system upload task to a signed URL).
+- `app/(tabs)/`: three tabs with a custom mono tab bar.
+  - `index.tsx` Climbs: your filmed climbs with gym, wall, colour, grade, result and live status.
+  - `sets.tsx` New sets: the free feed of fresh-wall photos, Following or All London. Live.
+  - `gyms.tsx` Gyms: every London gym, follow for alerts, a Coming soon card (wall maps),
+    Add your gym.
+- `app/gym/[id].tsx`: one gym, its website, its sets, "Be the first to post a set" when empty.
+- `app/post-set.tsx`: photo (camera or library), gym, wall, new colours, note.
+- `app/record.tsx`: tag the climb (gym, wall, colour, grade, flash/sent/fell), add a note, film
+  (expo-camera) or choose a clip (expo-image-picker), upload with progress.
 - `app/session/[id].tsx`: player (expo-video), timeline with a tick per note, summary and cue
-  cards; tapping a card jumps to that moment. Live status while it's being reviewed. Delete.
-- `lib/`: Supabase client, upload, push registration, feedback helpers (tested).
+  cards; tapping a card jumps to that moment. Each note has Helped / Not for me and an optional
+  reason (`note_ratings`). Live status while it's being reviewed. Delete.
+- `lib/`: Supabase client, upload, push registration, feedback and climb helpers (tested),
+  `gyms.tsx` (gyms, follows, set posts), `ratings.ts`, `use-sets.ts`.
+
+Migration `0002_gyms_sets.sql` adds the climb tags, 33 London gyms, `gym_follows`, `set_posts`
+(photos in the private `sets` bucket), `note_ratings`, `gym_requests` and `push_outbox`: a
+trigger queues "New set at …" for each follower and the worker sends them as Expo pushes.
 - `constants/theme.ts` + `brand-tokens.json`: identity v11. Black backgrounds, #0D0E0D tiles,
   white text. Mat blue only for the wordmark, the crimp and the tracked body; notes, markers
   and buttons are white. Host Grotesk and DM Mono, regular weight only.
