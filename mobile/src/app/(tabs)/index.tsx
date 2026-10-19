@@ -55,13 +55,7 @@ export default function Sessions() {
 
   return (
     <View style={styles.screen}>
-      <Header
-        right={
-          <Text variant="label" quiet onPress={() => supabase.auth.signOut()} accessibilityRole="button">
-            Sign out
-          </Text>
-        }
-      />
+      <Header />
       <FlatList
         data={rows}
         keyExtractor={(s) => s.id}

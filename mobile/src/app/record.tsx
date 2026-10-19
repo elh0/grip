@@ -11,6 +11,9 @@ import { PillButton } from '@/components/pill-button';
 import { Text } from '@/components/text';
 import { color, space, type } from '@/constants/theme';
 import { COLOURS, GRADES, RESULTS } from '@/lib/climb';
+import { useAllowance } from '@/lib/plans';
+import { allowanceLabel, isLimitError, projectTitle } from '@/lib/progress';
+import { useProjects } from '@/lib/projects';
 import type { ClimbResult } from '@/lib/types';
 import { uploadSession } from '@/lib/upload';
 
@@ -43,6 +46,23 @@ export default function Record() {
   const [recording, setRecording] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [limited, setLimited] = useState(false);
+  const { projects, current } = useProjects();
+  const { allowance } = useAllowance();
+  const openProjects = projects.filter((p) => p.status === 'open');
+  const [projectId, setProjectId] = useState<string | null | undefined>(undefined);
+  // Default to your current project until you pick (or clear) one yourself.
+  const chosenProject = projectId === undefined ? (current?.id ?? null) : projectId;
+
+  function chooseProject(id: string | null) {
+    setProjectId(id);
+    const p = openProjects.find((x) => x.id === id);
+    if (!p) return;
+    if (p.gym_id) setGymId(p.gym_id);
+    if (p.wall) setWall(p.wall);
+    if (p.colour) setColour(p.colour);
+    if (p.grade) setGrade(p.grade);
+  }
 
   async function openCamera() {
     const cam = camPerm?.granted ? camPerm : await requestCam();
@@ -87,13 +107,28 @@ export default function Record() {
 
   async function upload() {
     if (!videoUri) return;
+    if (allowance && allowance.used >= allowance.allowed) {
+      setLimited(true);
+      setError(`You've used this month's ${allowance.allowed} reviews. They come back on the 1st.`);
+      return;
+    }
     setStep('uploading');
     setError(null);
     try {
-      const session = await uploadSession({ videoUri, note, gymId, wall, colour, grade, result }, setProgress);
+      const session = await uploadSession(
+        { videoUri, note, gymId, wall, colour, grade, result, projectId: chosenProject },
+        setProgress,
+      );
       router.replace({ pathname: '/session/[id]', params: { id: session.id } });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed.');
+      setLimited(isLimitError(e));
+      setError(
+        isLimitError(e)
+          ? `You've used this month's ${allowance?.allowed ?? 3} reviews. Your clip is saved as a draft.`
+          : e instanceof Error
+            ? e.message
+            : 'Upload failed.',
+      );
       setStep('ready');
     }
   }
@@ -151,6 +186,18 @@ export default function Record() {
             </Text>
           ))}
         </View>
+        {openProjects.length ? (
+          <>
+            <Text variant="label" quiet>
+              Project
+            </Text>
+            <ChipRow>
+              {openProjects.map((p) => (
+                <Chip key={p.id} label={projectTitle(p)} on={chosenProject === p.id} onPress={() => chooseProject(chosenProject === p.id ? null : p.id)} />
+              ))}
+            </ChipRow>
+          </>
+        ) : null}
         <Text variant="label" quiet>
           Gym
         </Text>
@@ -205,6 +252,12 @@ export default function Record() {
           </View>
         ) : null}
         {error ? <Text variant="label">{error}</Text> : null}
+        {limited ? <PillButton label="See plans" variant="outline" onPress={() => router.push('/plans')} /> : null}
+        {allowance && !error ? (
+          <Text variant="label" quiet>
+            {allowanceLabel(allowance)}
+          </Text>
+        ) : null}
       </ScrollView>
       <View style={[styles.actions, { paddingBottom: insets.bottom + space(4) }]}>
         {step === 'setup' ? (

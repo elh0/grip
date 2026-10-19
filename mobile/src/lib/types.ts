@@ -19,6 +19,8 @@ export interface Session {
   colour: string | null;
   grade: string | null;
   result: ClimbResult | null;
+  project_id: string | null;
+  share_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -70,4 +72,31 @@ export interface NoteRating {
   user_id: string;
   vote: 'up' | 'down';
   why: string | null;
+}
+
+export type ProjectStatus = 'open' | 'sent' | 'dropped';
+
+export interface Project {
+  id: string;
+  user_id: string;
+  name: string | null;
+  gym_id: string | null;
+  place: string | null;
+  wall: string | null;
+  colour: string | null;
+  grade: string | null;
+  status: ProjectStatus;
+  pinned: boolean;
+  next_note: string | null;
+  resets_on: string | null;
+  sent_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewAllowance {
+  used: number;
+  allowed: number;
+  has_grip: boolean;
+  resets_on: string;
 }

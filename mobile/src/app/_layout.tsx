@@ -38,6 +38,8 @@ function Gate() {
       <Stack.Screen name="post-set" options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="session/[id]" />
       <Stack.Screen name="gym/[id]" />
+      <Stack.Screen name="project/[id]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="plans" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

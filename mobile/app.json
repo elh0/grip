@@ -59,7 +59,26 @@
           "color": "#4A74FF"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.gripcoach.app",
+          "widgets": [
+            {
+              "name": "YourProject",
+              "displayName": "Your project",
+              "description": "The boulder you're working on, your next-go note and when the wall resets.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "accessoryRectangular"
+              ],
+              "contentMarginsDisabled": false
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

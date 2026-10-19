@@ -2,7 +2,8 @@ import { useEvent } from 'expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { File, Paths } from 'expo-file-system';
+import { ActivityIndicator, Alert, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CueCard } from '@/components/cue-card';
@@ -13,6 +14,7 @@ import { color, space } from '@/constants/theme';
 import { placeLabel, resultLabel } from '@/lib/climb';
 import { activeNote, formatTime, isPending, orderNotes, sessionTitle } from '@/lib/feedback';
 import { useGyms } from '@/lib/gyms';
+import { setNextNote } from '@/lib/projects';
 import { loadRatings, rateNote } from '@/lib/ratings';
 import { supabase } from '@/lib/supabase';
 import type { FeedbackItem, NoteRating as Rating, Session } from '@/lib/types';
@@ -93,6 +95,31 @@ export default function SessionScreen() {
     player.play();
   };
 
+  const [nextNoteId, setNextNoteId] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+
+  async function pickNextGo(item: FeedbackItem) {
+    if (!session?.project_id) return;
+    await setNextNote(session.project_id, item.cue).catch(() => undefined);
+    setNextNoteId(item.id);
+  }
+
+  /** Download the tracked clip the worker rendered and hand it to the share sheet. */
+  async function share() {
+    if (!session?.share_path) return;
+    setSharing(true);
+    try {
+      const url = await signedUrl('shares', session.share_path, 600);
+      const file = new File(Paths.cache, `grip-${session.id}.mp4`);
+      if (file.exists) file.delete();
+      await File.downloadFileAsync(url, file);
+      await Share.share({ url: file.uri });
+    } catch {
+      Alert.alert('Could not share', 'Try again in a moment.');
+    }
+    setSharing(false);
+  }
+
   function confirmDelete() {
     if (!session) return;
     Alert.alert('Delete this session?', 'The clip and its notes are removed for good.', [
@@ -122,9 +149,16 @@ export default function SessionScreen() {
         <Text variant="label" tone="dark" onPress={() => router.back()} accessibilityRole="button">
           Back
         </Text>
-        <Text variant="label" tone="dark" quiet onPress={confirmDelete} accessibilityRole="button">
-          Delete
-        </Text>
+        <View style={styles.topActions}>
+          {session.share_path ? (
+            <Text variant="label" tone="dark" onPress={share} accessibilityRole="button">
+              {sharing ? 'Getting clip' : 'Share'}
+            </Text>
+          ) : null}
+          <Text variant="label" tone="dark" quiet onPress={confirmDelete} accessibilityRole="button">
+            Delete
+          </Text>
+        </View>
       </View>
       {videoUrl ? (
         <VideoView player={player} style={styles.video} contentFit="contain" nativeControls={false} />
@@ -166,6 +200,11 @@ export default function SessionScreen() {
               onPress={() => seek(item.t_seconds)}
             />
             <NoteRating rating={ratings[item.id]} onRate={(vote, why) => rate(item.id, vote, why)} />
+            {session.project_id ? (
+              <Text variant="label" tone="dark" quiet={nextNoteId !== item.id} onPress={() => pickNextGo(item)} accessibilityRole="button">
+                {nextNoteId === item.id ? 'On your widget for the next go' : 'Use for next go'}
+              </Text>
+            ) : null}
           </View>
         ))}
       </ScrollView>
@@ -180,4 +219,5 @@ const styles = StyleSheet.create({
   video: { width: '100%', aspectRatio: 16 / 9, backgroundColor: color.black },
   body: { padding: space(5), gap: space(3) },
   note: { gap: space(2) },
+  topActions: { flexDirection: 'row', gap: space(5) },
 });

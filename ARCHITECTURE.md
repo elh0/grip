@@ -59,7 +59,7 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 ## App (`mobile/src/`)
 
 - `app/sign-in.tsx`: email one-time code.
-- `app/(tabs)/`: three tabs with a custom mono tab bar.
+- `app/(tabs)/`: four tabs with a custom mono tab bar.
   - `index.tsx` Climbs: your filmed climbs with gym, wall, colour, grade, result and live status.
   - `sets.tsx` New sets: the free feed of fresh-wall photos, Following or All London. Live.
   - `gyms.tsx` Gyms: every London gym, follow for alerts, a Coming soon card (wall maps),
@@ -77,6 +77,20 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 Migration `0002_gyms_sets.sql` adds the climb tags, 33 London gyms, `gym_follows`, `set_posts`
 (photos in the private `sets` bucket), `note_ratings`, `gym_requests` and `push_outbox`: a
 trigger queues "New set at …" for each follower and the worker sends them as Expo pushes.
+Migration `0003_projects_plans.sql` adds `projects` (a boulder you keep going back to, in a gym
+or outdoors: next-go note, reset date, one pinned per climber; a send or flash on a linked climb
+marks it sent), `sessions.project_id` and the worker-only `sessions.share_path`, `entitlements`
+(periods of Grip from Apple, referrals, creator offers or by hand), `review_uses` and
+`review_allowance()` (3 reviews a month free, 20 with Grip; `enqueue_analysis` refuses the upload
+past the limit, re-uploading a climb is free), referral codes with `redeem_referral()` (both get a
+free month, a referrer earns at most 12), and the private `shares` bucket for tracked clips.
+- `app/(tabs)/you.tsx` You: your project (next-go note, reset countdown), other projects, the
+  grade pyramid of sends (a climb counts once, flashes filled), your plan and invite.
+- `app/project/[id].tsx`: new or edit a project; `app/plans.tsx`: Free and Grip cards, the
+  founding offer, your invite code and a box for a friend's. Purchases wait for the App Store build.
+- `widgets/your-project.tsx`: the "Your project" home and lock screen widget (expo-widgets);
+  `lib/widget.ts` pushes the current project to it whenever projects load.
+- `components/opening.tsx`: the opening screen, the crimp fingertip presses the i and lets go.
 - `constants/theme.ts` + `brand-tokens.json`: identity v11. Black backgrounds, #0D0E0D tiles,
   white text. Mat blue only for the wordmark, the crimp and the tracked body; notes, markers
   and buttons are white. Host Grotesk and DM Mono, regular weight only.

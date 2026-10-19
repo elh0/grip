@@ -12,6 +12,7 @@ export interface NewSession {
   colour?: string | null;
   grade?: string | null;
   result?: ClimbResult | null;
+  projectId?: string | null;
 }
 
 export function videoObjectPath(userId: string, sessionId: string, uri: string): string {
@@ -44,6 +45,7 @@ export async function uploadSession(
       colour: input.colour ?? null,
       grade: input.grade ?? null,
       result: input.result ?? null,
+      project_id: input.projectId ?? null,
       athlete_note: input.note?.trim() || null,
       title: input.title?.trim() || null,
     })
@@ -80,7 +82,7 @@ export async function uploadSession(
   return updated;
 }
 
-export async function signedUrl(bucket: 'videos' | 'frames', path: string, expiresIn = 3600) {
+export async function signedUrl(bucket: 'videos' | 'frames' | 'shares', path: string, expiresIn = 3600) {
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
   if (error) throw error;
   return data.signedUrl;
