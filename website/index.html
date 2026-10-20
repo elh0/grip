@@ -46,6 +46,7 @@ h2{font-size:clamp(36px,5.4vw,88px);line-height:.98;letter-spacing:-.04em}
 .top nav a:hover{color:var(--text)}
 .top .btn{height:40px;padding-inline:18px;font-size:15px;color:#000}
 @media (max-width:760px){.top nav a:not(.btn){display:none}.top{height:60px}}
+@media (max-width:380px){.top .btn{height:42px;padding-inline:16px;font-size:15px}}
 
 /* the walkthrough: copy scrolls on the left, one phone stays put on the right */
 .walk{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);position:relative}
@@ -74,17 +75,26 @@ h1 span{display:block;white-space:nowrap}
 .dots button.on{background:var(--white);transform:scale(1.4)}
 .hint{position:absolute;bottom:28px;left:0;right:0;text-align:center;font-size:14px;color:var(--quiet);transition:opacity .6s}
 
+.dots button span{display:none}
+/* phones (20 Oct 2026): nothing sticky. The pinned half-screen phone snagged on Safari/Chrome's bottom bar,
+   so on small screens the phone sits in the page and the steps are a row of cards you swipe; each card drives the phone. */
 @media (max-width:900px){
-  .walk{grid-template-columns:1fr}
-  .walk{padding-top:60px}
-  .stagewrap{grid-row:1;top:60px;height:48vh;height:48svh;z-index:4;background:var(--bg)}
-  .stagewrap::after{content:"";position:absolute;left:0;right:0;bottom:-36px;height:36px;background:linear-gradient(var(--bg),transparent);pointer-events:none}
-  .col{grid-row:2}
-  .hero{min-height:0;padding-block:28px 40px;gap:20px}
+  .walk{display:flex;flex-direction:column;padding-top:60px}
+  .col{display:contents}
+  .hero,.what{padding-inline:16px}
+  .hero{order:1;min-height:0;padding-block:28px 32px;gap:20px}
   h1{font-size:clamp(36px,10.6vw,72px)}
-  .what{min-height:0;padding-block:40px 20px}
-  .step{min-height:62vh;align-content:start;padding-block:56px 40px}
-  .dots{display:none}
+  .what{order:6;min-height:0;padding-block:8px 24px}
+  .stagewrap{order:2;position:relative;top:auto;height:min(560px,56svh)}
+  .dots{order:4;position:static;transform:none;display:flex;gap:8px;overflow-x:auto;padding:4px 16px 0;scrollbar-width:none}
+  .dots::-webkit-scrollbar,.steps::-webkit-scrollbar{display:none}
+  .dots button{width:auto;height:36px;flex:none;padding-inline:15px;border-radius:999px;background:var(--tile);color:var(--quiet);font-size:14px}
+  .dots button.on{background:var(--white);color:#000;transform:none}
+  .dots button span{display:inline}
+  .steps{order:5;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;padding:12px 16px 48px;scrollbar-width:none;overscroll-behavior-x:contain}
+  .step{flex:0 0 min(86%,420px);min-height:0;scroll-snap-align:start;align-content:start;gap:14px;padding:22px 20px;border-radius:18px;background:var(--tile);opacity:.55}
+  .step h2{font-size:clamp(24px,6.8vw,34px)}
+  .step .lead{font-size:16px}
   .hint{bottom:6px;font-size:13px}
 }
 
@@ -398,6 +408,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div class="what" id="how">
       <p>Most climbers film everything and watch nothing back. <em>Grip watches it for you. It finds the moments that cost you the send and tells you what to try next session, in plain words.</em></p>
     </div>
+    <div class="steps" id="steps">
     <div class="step" data-scr="film" data-pose="-16,6">
       <span class="tag"><i></i>Film</span>
       <h2>Prop it up and climb.</h2>
@@ -433,6 +444,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
       <h2>Know when your wall resets.</h2>
       <p class="lead">Follow your gyms and Grip pings you when a new set goes up, with a photo of the wall, so you turn up on the right night.</p>
       <p class="try">Switch tabs at the bottom of the phone.</p>
+    </div>
     </div>
   </div>
 
@@ -1142,9 +1154,13 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 
   /* ---------- the walkthrough: steps drive the phone ---------- */
   var steps = $$('.step'), dots = $('#dots');
-  dots.innerHTML = steps.map(function (s, i) { return '<button aria-label="' + s.querySelector('.tag').textContent + '"></button>'; }).join('');
+  dots.innerHTML = steps.map(function (s, i) { var t = s.querySelector('.tag').textContent; return '<button aria-label="' + t + '"><span>' + t + '</span></button>'; }).join('');
   var dotBtns = $$('button', dots);
-  dotBtns.forEach(function (b, i) { b.addEventListener('click', function () { steps[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); }); });
+  var strip = $('#steps'), small = matchMedia('(max-width:900px)');
+  dotBtns.forEach(function (b, i) { b.addEventListener('click', function () {
+    if (small.matches) { strip.scrollTo({ left: steps[i].offsetLeft - steps[0].offsetLeft, behavior: reduce ? 'auto' : 'smooth' }); setStep(i); }
+    else steps[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+  }); });
   var active = -1;
   function setStep(i) {
     if (i === active) return; active = i;
@@ -1157,13 +1173,24 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     show(steps[i].dataset.scr);
   }
   function onScroll() {
+    if (small.matches) return;
     var mid = innerHeight * (innerWidth <= 900 ? .72 : .5), best = -1;
     steps.forEach(function (s, j) { var b = s.getBoundingClientRect(); if (b.top < mid && b.bottom > mid) best = j; });
     if (best === -1 && steps[0].getBoundingClientRect().top > mid) best = -1;
     else if (best === -1) best = active;
     setStep(best);
   }
-  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  addEventListener('scroll', onScroll, { passive: true });
+  /* small screens: the swiped card decides the step */
+  function onSwipe() {
+    if (!small.matches) return;
+    var w = steps[1].offsetLeft - steps[0].offsetLeft;
+    setStep(Math.max(0, Math.min(steps.length - 1, Math.round(strip.scrollLeft / w))));
+  }
+  strip.addEventListener('scroll', onSwipe, { passive: true });
+  function mode() { active = -2; if (small.matches) onSwipe(); else onScroll(); }
+  if (small.addEventListener) small.addEventListener('change', mode);
+  mode();
 
   /* ---------- gyms section ---------- */
   var cards = SETS.map(function (c, i) { return '<div class="card">' + wallSvg(i + 3, c[2]) + '<div class="cap"><span>' + c[0] + ' / ' + c[1] + '</span><span class="q">' + c[3] + '</span></div></div>'; }).join('');
