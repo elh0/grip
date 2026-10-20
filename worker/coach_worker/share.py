@@ -1,7 +1,8 @@
 """The shareable clip: the whole climb with the blue tracking drawn on, and a small wordmark.
 
-Every share is an ad, so it has to look good: pose runs at `POSE_FPS`, is lightly smoothed
-and interpolated to every output frame at `OUTPUT_FPS`, and lines are drawn at twice the size
+Every share is an ad, so it has to look good: pose runs at `POSE_FPS`, is cleaned
+(motion.clean_poses: no blinking joints, short losses bridged, smoothed), interpolated to every
+output frame at `OUTPUT_FPS`, and lines are drawn at twice the size
 and scaled down so they stay clean after H.264. Capped at a minute and 1080 px on the long
 side. Without pose there is nothing to show, so it is skipped.
 """
@@ -22,6 +23,7 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw
 
 from . import frames as fr
+from .motion import clean_poses
 from .pose import MAT_BLUE, Point, PoseDetector, PoseFrame, draw_pose, measure, try_detector
 
 log = logging.getLogger(__name__)
@@ -33,7 +35,6 @@ MAX_SECONDS = 60.0
 MAX_SIDE = 1080
 MAX_GAP_S = 0.5               # interpolate across a lost pose this short, otherwise draw nothing
 MAX_JUMP = 0.1                # centre of mass moving further than this between samples: new body
-TRAIL_S = 3.0                 # centre-of-mass trail: the last few seconds of the climb
 SUPERSAMPLE = 2
 WORDMARK_WHITE = (243, 243, 240)
 WORDMARK_OPACITY = 0.85
@@ -111,28 +112,6 @@ def _jumped(a: tuple[float, float] | None, b: tuple[float, float] | None) -> boo
 def _near(a: PoseFrame, b: PoseFrame, max_gap: float) -> bool:
     """Close enough in time and place to be the same body moving."""
     return abs(b.t - a.t) <= max_gap and not _jumped(a.com, b.com)
-
-
-def smooth(poses: list[PoseFrame], max_gap: float = MAX_GAP_S) -> list[PoseFrame]:
-    """1-2-1 smoothing over neighbouring poses, to take the jitter out of per-image tracking."""
-    out = []
-    for i, pf in enumerate(poses):
-        prev = poses[i - 1] if i and _near(poses[i - 1], pf, max_gap) else None
-        nxt = poses[i + 1] if i + 1 < len(poses) and _near(pf, poses[i + 1], max_gap) else None
-        points = {}
-        for name in pf.points:
-            p = pf.visible(name)
-            near = [q for q in (prev and prev.visible(name), nxt and nxt.visible(name)) if q]
-            if p and near:
-                ws = [2.0] + [1.0] * len(near)
-                pts = [p, *near]
-                points[name] = Point(sum(q.x * w for q, w in zip(pts, ws, strict=True)) / sum(ws),
-                                     sum(q.y * w for q, w in zip(pts, ws, strict=True)) / sum(ws),
-                                     p.visibility)
-            else:
-                points[name] = pf.points[name]
-        out.append(measure(PoseFrame(t=pf.t, points=points)))
-    return out
 
 
 def pose_at(poses: list[PoseFrame], t: float, max_gap: float = MAX_GAP_S) -> PoseFrame | None:
@@ -235,16 +214,22 @@ def wordmark(height: int, colour=WORDMARK_WHITE, opacity: float = WORDMARK_OPACI
 def track(video: Path, detector: PoseDetector, work_dir: Path, duration: float,
           pose_fps: float = POSE_FPS) -> list[PoseFrame]:
     sampled = fr.sample_frames(video, work_dir, pose_fps, POSE_WIDTH, end=duration, prefix="p")
-    return smooth([p for f in sampled if (p := detector.detect(f.path, f.t))])
+    return [p for f in sampled if (p := detector.detect(f.path, f.t))]
 
 
-def render_share(video: Path, out_path: Path, detector: PoseDetector, work_dir: Path, *,
+def render_share(video: Path, out_path: Path, detector: PoseDetector | None, work_dir: Path, *,
+                 poses: list[PoseFrame] | None = None,
                  fps: int = OUTPUT_FPS, pose_fps: float = POSE_FPS,
                  max_seconds: float = MAX_SECONDS, max_side: int = MAX_SIDE) -> Path | None:
-    """Render the tracked clip to out_path. None when no body was found in the clip."""
+    """Render the tracked clip to out_path. None when no body was found in the clip.
+
+    Pass the review's `poses` to reuse its tracking; otherwise `detector` tracks the clip.
+    """
     src = inspect(video)
     duration = min(src.duration, max_seconds)
-    poses = track(video, detector, work_dir / "pose", duration, pose_fps)
+    if not poses and detector:
+        poses = track(video, detector, work_dir / "pose", duration, pose_fps)
+    poses = clean_poses([p for p in poses or [] if p.t <= duration], src.width / src.height)
     if not poses:
         log.info("share skipped: no body tracked in %s", video.name)
         return None
@@ -270,7 +255,6 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector, work_dir: 
                "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out_path)]
 
     frame_bytes = w * h * 3
-    trail: list[tuple[float, float]] = []
     with tempfile.TemporaryFile() as dec_err, tempfile.TemporaryFile() as enc_err:
         dec = subprocess.Popen(decode, stdout=subprocess.PIPE, stderr=dec_err)
         enc = subprocess.Popen(encode, stdin=subprocess.PIPE, stderr=enc_err)
@@ -281,17 +265,12 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector, work_dir: 
                 im = Image.frombytes("RGB", (w, h), raw)
                 pf = pose_at(poses, t)
                 if pf:
-                    if pf.com:
-                        if trail and _jumped(trail[-1], pf.com):
-                            trail.clear()       # tracking hopped to someone else
-                        trail.append(pf.com)
-                        del trail[:-max(2, math.ceil(TRAIL_S * fps))]
+                    # no centre-of-mass trail: in picture coordinates it lags off the hip
+                    # whenever the phone pans, and reads as the tracker losing the body
                     mask = Image.new("L", (w * SUPERSAMPLE, h * SUPERSAMPLE), 0)
-                    draw_pose(ImageDraw.Draw(mask), mask.size, pf, trail, fill=255,
+                    draw_pose(ImageDraw.Draw(mask), mask.size, pf, fill=255,
                               line=line, r=r)
                     im.paste(MAT_BLUE, mask=mask.reduce(SUPERSAMPLE))
-                else:
-                    trail.clear()               # lost the climber: start the trail again
                 im.paste(mark, mark_box, mark)
                 try:
                     enc.stdin.write(im.tobytes())
@@ -314,8 +293,10 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector, work_dir: 
 
 
 def make_share(video: Path, out_path: Path, model_path: str, work_dir: Path,
-               **render_kw) -> Path | None:
+               poses: list[PoseFrame] | None = None, **render_kw) -> Path | None:
     """Render the share if pose is available. None (and a log line) when it can't be made."""
+    if poses:
+        return render_share(video, out_path, None, work_dir, poses=poses, **render_kw)
     detector = try_detector(model_path)
     if not detector:
         log.info("share skipped: pose unavailable (set POSE_MODEL_PATH, install .[pose])")

@@ -84,14 +84,15 @@ def process_job(job: dict, db: Supabase, settings: Settings, client=None) -> Non
 
         # After the push: the review is what they're waiting for, the share can follow.
         if session["sport"] == "climbing":
-            share_session(db, settings, video, uid, sid, work / "share")
+            share_session(db, settings, video, uid, sid, work / "share", analysis.poses)
 
 
 def share_session(db: Supabase, settings: Settings, video: Path, uid: str, sid: str,
-                  work: Path) -> str | None:
+                  work: Path, poses: list | None = None) -> str | None:
     """Render, upload and record the shareable tracked clip. Never fails the job."""
     try:
-        out = share.make_share(video, work / "share.mp4", settings.pose_model_path, work)
+        out = share.make_share(video, work / "share.mp4", settings.pose_model_path, work,
+                               poses=poses)
         if not out:
             return None
         path = db.upload(SHARE_BUCKET, f"{uid}/{sid}.mp4", out, content_type="video/mp4")
