@@ -9,35 +9,42 @@ from . import Flag, Sport, dedupe
 
 ELBOW_FLARE_RATIO = 1.1  # elbow-to-hip distance over torso length
 FLAT_SPREAD = 0.06       # shoulders and hips this close in height reads as flat on the mat
-SUSTAINED_FRAMES = 4
+SUSTAINED_S = 0.6        # how long a position has to last to count
 
 
-def rules(frames: list[PoseFrame]) -> list[Flag]:
+def rules(frames: list[PoseFrame], aspect: float = 1.0, camera: list | None = None
+          ) -> list[Flag]:
+    """`aspect` and `camera` are accepted for parity with climbing; rolls don't need them."""
     flags: list[Flag] = []
-    flare = {"left": 0, "right": 0}
-    flat = 0
+    # when each position started (None = not in it); a flag fires once it has lasted SUSTAINED_S
+    flare: dict[str, float | None] = {"left": None, "right": None}
+    fired = {"left": False, "right": False, "flat": False}
+    flat: float | None = None
     for pf in frames:
         for side in ("left", "right"):
             s, e, h = (pf.visible(f"{side}_{j}") for j in ("shoulder", "elbow", "hip"))
             if s and e and h:
                 torso = math.dist((s.x, s.y), (h.x, h.y)) or 1e-6
                 if math.dist((e.x, e.y), (h.x, h.y)) / torso > ELBOW_FLARE_RATIO:
-                    flare[side] += 1
-                    if flare[side] == SUSTAINED_FRAMES:
-                        flags.append(Flag(pf.t, f"{side.title()} elbow",
+                    start = flare[side] = pf.t if flare[side] is None else flare[side]
+                    if not fired[side] and pf.t - start >= SUSTAINED_S:
+                        fired[side] = True
+                        flags.append(Flag(start, f"{side.title()} elbow",
                                           "flared away from the body for a while", "moderate"))
                     continue
-            flare[side] = 0
+            flare[side], fired[side] = None, False
 
         ls, rs, lh, rh = (pf.visible(n) for n in
                           ("left_shoulder", "right_shoulder", "left_hip", "right_hip"))
         if ls and rs and lh and rh:
             spread = abs((ls.y + rs.y) / 2 - (lh.y + rh.y) / 2)
-            flat = flat + 1 if spread < FLAT_SPREAD else 0
-            if flat == SUSTAINED_FRAMES:
-                flags.append(Flag(pf.t, "Back", "flat on the mat; get onto a side", "major"))
-        else:
-            flat = 0
+            if spread < FLAT_SPREAD:
+                flat = pf.t if flat is None else flat
+                if not fired["flat"] and pf.t - flat >= SUSTAINED_S:
+                    fired["flat"] = True
+                    flags.append(Flag(flat, "Back", "flat on the mat; get onto a side", "major"))
+                continue
+        flat, fired["flat"] = None, False
     return dedupe(flags)
 
 

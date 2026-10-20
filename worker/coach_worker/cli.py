@@ -81,7 +81,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.share:
         with tempfile.TemporaryDirectory(prefix="grip-share-") as tmp:
-            made = make_share(args.video, out / "share.mp4", settings.pose_model_path, Path(tmp))
+            made = make_share(args.video, out / "share.mp4", settings.pose_model_path, Path(tmp),
+                              poses=analysis.poses)
         print(f"wrote {made}" if made else "share skipped: no pose (set POSE_MODEL_PATH and "
               "pip install -e \".[pose]\") or no body found", file=sys.stderr)
     return 0

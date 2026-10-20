@@ -143,24 +143,36 @@ def draw_wireframe(image_path: Path, pf: PoseFrame, out_path: Path,
 
 
 class PoseDetector:
-    """Thin wrapper over the MediaPipe Pose Landmarker (image mode)."""
+    """Thin wrapper over the MediaPipe Pose Landmarker.
 
-    def __init__(self, model_path: str):
+    Video mode (the default) tracks the body from one frame to the next instead of guessing
+    each frame afresh, which roughly halves the jitter. It needs frames in time order, so use
+    one detector per clip.
+    """
+
+    def __init__(self, model_path: str, video: bool = True):
         import mediapipe as mp  # optional dependency
         from mediapipe.tasks import python as mp_tasks
         from mediapipe.tasks.python import vision
 
         self._mp = mp
+        self._video = video
+        self._last_ms = -1
         options = vision.PoseLandmarkerOptions(
             base_options=mp_tasks.BaseOptions(model_asset_path=model_path),
-            running_mode=vision.RunningMode.IMAGE,
+            running_mode=vision.RunningMode.VIDEO if video else vision.RunningMode.IMAGE,
             num_poses=1,
         )
         self._landmarker = vision.PoseLandmarker.create_from_options(options)
 
     def detect(self, image_path: Path, t: float) -> PoseFrame | None:
         image = self._mp.Image.create_from_file(str(image_path))
-        result = self._landmarker.detect(image)
+        if self._video:
+            ms = max(int(round(t * 1000)), self._last_ms + 1)  # must strictly increase
+            self._last_ms = ms
+            result = self._landmarker.detect_for_video(image, ms)
+        else:
+            result = self._landmarker.detect(image)
         if not result.pose_landmarks:
             return None
         lms = result.pose_landmarks[0]
@@ -174,11 +186,11 @@ class PoseDetector:
         self._landmarker.close()
 
 
-def try_detector(model_path: str) -> PoseDetector | None:
+def try_detector(model_path: str, video: bool = True) -> PoseDetector | None:
     if not model_path or not Path(model_path).is_file():
         return None
     try:
-        return PoseDetector(model_path)
+        return PoseDetector(model_path, video=video)
     except (ImportError, OSError) as exc:  # not installed, or Linux without libEGL/libGLES
         logging.getLogger(__name__).warning("pose disabled: %s", exc)
         return None

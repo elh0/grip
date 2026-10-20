@@ -238,13 +238,20 @@ def track(video: Path, detector: PoseDetector, work_dir: Path, duration: float,
     return smooth([p for f in sampled if (p := detector.detect(f.path, f.t))])
 
 
-def render_share(video: Path, out_path: Path, detector: PoseDetector, work_dir: Path, *,
+def render_share(video: Path, out_path: Path, detector: PoseDetector | None, work_dir: Path, *,
+                 poses: list[PoseFrame] | None = None,
                  fps: int = OUTPUT_FPS, pose_fps: float = POSE_FPS,
                  max_seconds: float = MAX_SECONDS, max_side: int = MAX_SIDE) -> Path | None:
-    """Render the tracked clip to out_path. None when no body was found in the clip."""
+    """Render the tracked clip to out_path. None when no body was found in the clip.
+
+    Pass the review's `poses` to reuse its tracking; otherwise `detector` tracks the clip.
+    """
     src = inspect(video)
     duration = min(src.duration, max_seconds)
-    poses = track(video, detector, work_dir / "pose", duration, pose_fps)
+    if poses:
+        poses = smooth([p for p in poses if p.t <= duration])
+    elif detector:
+        poses = track(video, detector, work_dir / "pose", duration, pose_fps)
     if not poses:
         log.info("share skipped: no body tracked in %s", video.name)
         return None
@@ -314,8 +321,10 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector, work_dir: 
 
 
 def make_share(video: Path, out_path: Path, model_path: str, work_dir: Path,
-               **render_kw) -> Path | None:
+               poses: list[PoseFrame] | None = None, **render_kw) -> Path | None:
     """Render the share if pose is available. None (and a log line) when it can't be made."""
+    if poses:
+        return render_share(video, out_path, None, work_dir, poses=poses, **render_kw)
     detector = try_detector(model_path)
     if not detector:
         log.info("share skipped: pose unavailable (set POSE_MODEL_PATH, install .[pose])")

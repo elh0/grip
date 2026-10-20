@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ..pose import PoseFrame
-
 
 @dataclass
 class Flag:
@@ -22,7 +20,8 @@ class Sport:
     name: str
     coach_brief: str
     filming_tip: str
-    rules: Callable[[list[PoseFrame]], list[Flag]]
+    # rules(poses, aspect=width/height, camera=motion.camera_motion output, one per pose)
+    rules: Callable[..., list[Flag]]
 
 
 def get_sport(key: str) -> Sport:

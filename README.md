@@ -23,9 +23,9 @@ Needs Python 3.11 and ffmpeg.
 cd worker
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev,pose]"
-mkdir -p models && curl -sSfo models/pose_landmarker_lite.task \
-  https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task
-cp .env.example .env   # add ANTHROPIC_API_KEY, set POSE_MODEL_PATH=models/pose_landmarker_lite.task
+mkdir -p models && curl -sSfo models/pose_landmarker_heavy.task \
+  https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task
+cp .env.example .env   # add ANTHROPIC_API_KEY, set POSE_MODEL_PATH=models/pose_landmarker_heavy.task
 
 grip-coach clip.mp4 --sport climbing --note "crux is 0:04 to 0:07" --out out/clip1
 open out/clip1/report.html

@@ -41,14 +41,24 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 
 1. `frames.py` samples the clip at `COACH_SAMPLE_FPS` and scores motion between frames. If the
    athlete's note names a window ("watch 0:12 to 0:18") it samples three times denser there.
-2. `pose.py` (optional, MediaPipe) finds the fifteen points from the identity, measures knee,
-   elbow and hip angles and a rough centre of mass, and draws the blue wireframe, the
-   centre-of-mass trail and the centre line onto keyframes.
-3. `sports/` turns poses into hints: climbing flags bent arms while static and foot cuts; BJJ
-   flags flared elbows and being flat on the back. They are hints for the coach, never verdicts.
-4. `frames.select_keyframes` picks `COACH_MAX_KEYFRAMES` frames spread across the clip, the
+2. `pose.py` (optional, MediaPipe, heavy model) tracks the fifteen points from the identity on
+   its own 15 fps stream of 640 px frames, in video mode (one detector per clip, so each frame
+   builds on the last), measures knee, elbow and hip angles and a rough centre of mass, and
+   draws the blue wireframe, the centre-of-mass trail and the centre line onto keyframes.
+3. `motion.py` cleans the poses for the rules: it drops frames that belong to someone else,
+   measures how the phone moved (ORB features on the wall, a move/turn/zoom fit per frame) and
+   maps joints onto the wall, swaps left and right limbs back when the model mixes them up,
+   smooths every joint, and measures in torso lengths and per second.
+4. `sports/` turns the track into hints. Climbing: a bent-arm hang (hand above the shoulder,
+   elbow under 110°, body still, at least 1 s), a placed foot coming off (it had stood still,
+   drops fast and downwards while the hands hold, and the hips sag or the leg shoots straight),
+   and a foot cut (both feet leave together, not upwards, while the hands hold). At most six,
+   majors first. BJJ: flared elbows and flat on the back, each lasting 0.6 s. They are hints
+   for the coach, never verdicts. Tuned on the BlocFit clips of 17 Oct 2026: 25 flags from the
+   old rules (mostly camera panning and swapped feet) became 7, each checked against the video.
+5. `frames.select_keyframes` picks `COACH_MAX_KEYFRAMES` frames spread across the clip, the
    highest-motion frame in each slice, with half the budget inside the athlete's window.
-5. `critique.py` sends the frames, profile, flags and joint angles to Claude
+6. `critique.py` sends the frames, profile, flags and joint angles to Claude
    (`claude-opus-5-5`, structured output via `messages.parse`, `fallbacks: "default"`), then
    enforces the product rules: three notes at most, in clip order, timestamps inside the clip.
    Without an API key it returns the strongest tracker flags instead (offline mode).
@@ -58,8 +68,9 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 
 Share clip (`share.py`): after every successful climbing review, once the athlete has been
 pushed, the worker renders the whole clip (first 60 s, long side ≤ 1080 px, 30 fps H.264
-yuv420p +faststart, source audio kept as AAC) with the blue tracking on every frame. Pose runs at
-15 fps, is smoothed and interpolated in between, and never morphs between two people. There is a
+yuv420p +faststart, source audio kept as AAC) with the blue tracking on every frame. It reuses
+the review's 15 fps poses, smoothed and interpolated in between, and never morphs between two
+people. There is a
 small white `grip` wordmark bottom right, rasterised from the brand path, and nothing else. It goes to
 the private `shares` bucket at `<user_id>/<session_id>.mp4` and `sessions.share_path` is set.
 No pose (MediaPipe missing, `POSE_MODEL_PATH` unset, no body found) means no share. Any render or
