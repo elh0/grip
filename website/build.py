@@ -21,7 +21,9 @@ v8 = open(os.path.join(HERE, 'site-v8.html')).read()
 # REEL: the tracked climber stands in until Elliot's real clip arrives (then swap in a muted looping <video>).
 REEL = '<svg aria-label="A climber tracked as lines and joints, with notes pinned to the moment"></svg>'
 pose = open(os.path.join(HERE, 'pose.js')).read()  # hand-keyed heel hook, triangle and muscle-up (19 Oct 2026)
-v8 = v8.replace('{{REEL}}', REEL).replace('{{POSE}}', pose).replace('{{ENGINE}}', engine).replace('{{WORD}}', word).replace('{{MARK}}', mark).replace('{{LINE}}', LINE)
+# Tally form id for the beta/coach signup (Elliot chose Tally, 20 Oct 2026). Empty = demo forms. Form needs hidden fields 'email' and 'type'.
+TALLY = ''
+v8 = v8.replace('{{TALLY}}', TALLY).replace('{{REEL}}', REEL).replace('{{POSE}}', pose).replace('{{ENGINE}}', engine).replace('{{WORD}}', word).replace('{{MARK}}', mark).replace('{{LINE}}', LINE)
 assert '{{' not in v8
 # doctype + charset so £ and × survive when served as a plain file on g-r-i-p.com (caught by the studio site thread, 19 Oct 2026)
 # Go-live head (19 Oct 2026): tab icon, home-screen icon and share card for g-r-i-p.com. assets/og.png comes from og.py.

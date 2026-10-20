@@ -1009,13 +1009,23 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
   var $ = function (s, r) { return (r || document).querySelector(s); }, $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* demo forms: nothing leaves the page */
+  /* signup: hands the email to the Tally form (popup, prefilled) so sign-ups land in Elliot's Tally sheet.
+     TALLY is set in build.py; empty means the page stays in demo mode and nothing leaves it. */
+  var TALLY = '';
+  if (TALLY) { var ts = document.createElement('script'); ts.src = 'https://tally.so/widgets/embed.js'; ts.async = true; document.head.appendChild(ts); }
   $$('form.form').forEach(function (fm) {
     fm.addEventListener('submit', function (e) {
       e.preventDefault();
       var inp = $('input', fm), n = fm.parentNode.querySelector('.note');
       if (!inp.value || !inp.checkValidity()) { n.textContent = 'Enter an email, like you@email.com'; inp.focus(); return; }
-      n.textContent = 'Demo only: ' + inp.value + ' would go on the list.'; inp.value = '';
+      if (!TALLY) { n.textContent = 'Demo only: ' + inp.value + ' would go on the list.'; inp.value = ''; return; }
+      var type = inp.id === 'e3' ? 'coach' : 'beta', email = inp.value;
+      if (window.Tally) {
+        Tally.openPopup(TALLY, { layout: 'modal', width: 480, hiddenFields: { email: email, type: type },
+          onSubmit: function () { n.textContent = "You're on the list. We'll email " + email + ' when it opens.'; inp.value = ''; } });
+      } else {
+        window.open('https://tally.so/r/' + TALLY + '?email=' + encodeURIComponent(email) + '&type=' + type, '_blank', 'noopener');
+      }
     });
   });
 
