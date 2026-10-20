@@ -4,4 +4,5 @@ node_modules/
 .venv/
 __pycache__/
 .og-card.tmp.html
-website/clips/
+website/clips/*.mp4
+website/clips/*.jpg

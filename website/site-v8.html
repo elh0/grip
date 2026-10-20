@@ -261,6 +261,61 @@ section{padding-block:clamp(110px,14vw,200px) 0}
 .reel .lbl .pill{height:36px;padding-inline:14px;font-size:14px;background:rgba(0,0,0,.7)}
 .reel .lbl .pill.w{background:var(--white);color:#000}
 .reel{max-height:78vh;width:100%}
+/* real-climb read-out (20 Oct 2026, Elliot: "make it really jazzy, that's what sells it"): data comes from the tracker JSON */
+.rbox{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:10px;align-items:stretch}
+.reel{cursor:pointer}
+.reel #rhud{pointer-events:none}
+.mv{position:absolute;left:16px;top:16px;display:grid;gap:2px;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.66);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:60%;transition:opacity .3s,transform .3s}
+.mv b{font-weight:400;font-size:17px;line-height:1.2}
+.mv.idle{opacity:.6}
+.mv.pop{animation:pop .5s var(--ease)}
+@keyframes pop{from{transform:translateY(6px);opacity:.3}to{transform:none;opacity:1}}
+.rpin{position:absolute;left:16px;bottom:16px;max-width:min(380px,70%);display:grid;gap:4px;padding:12px 14px;border-radius:12px;background:rgba(243,243,240,.95);color:#000;opacity:0;transform:translateY(10px);transition:opacity .35s,transform .35s var(--ease);pointer-events:none}
+.rpin.on{opacity:1;transform:none}
+.rpin b{font-weight:400;font-size:17px;line-height:1.2}
+.rpin span:last-child{font-size:14px;color:rgba(0,0,0,.66)}
+.rpin .mono{color:rgba(0,0,0,.5)}
+.reel .paused{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.7);opacity:0;transition:opacity .3s;pointer-events:none}
+.reel.is-paused .paused{opacity:1}
+.rpanel{background:var(--tile);border-radius:18px;padding:16px;display:grid;gap:16px;align-content:start;min-width:0}
+.rrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rclips{display:flex;gap:6px;flex-wrap:wrap}
+.rclips .pill{height:34px;padding-inline:13px;font-size:14px}
+.rclips .pill.w{background:var(--white);color:#000}
+.rtc{font-size:13px;color:var(--text)}
+.rtl{position:relative;height:38px;border-radius:8px;background:#060707;cursor:pointer;overflow:hidden}
+.rtl .seg{position:absolute;height:9px;border-radius:5px;opacity:.5;transition:opacity .2s}
+.rtl .seg.h{top:7px;background:var(--white)}
+.rtl .seg.f{top:21px;background:var(--quiet)}
+.rtl .seg.on{opacity:1}
+.rtl .nm{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--line)}
+.rtl #rhead{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--white);box-shadow:0 0 8px rgba(243,243,240,.6)}
+.rlegend{display:flex;gap:14px;margin-top:-8px}
+.rlegend i{display:inline-block;width:12px;height:5px;border-radius:3px;margin-right:6px;vertical-align:middle;background:var(--white)}
+.rlegend i.f{background:var(--quiet)}.rlegend i.n{width:2px;height:10px;background:var(--line)}
+.limbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.limbs div{border-radius:10px;background:#060707;padding:9px 8px;display:grid;gap:4px;transition:background .25s}
+.limbs div.mvg{background:var(--white);color:#000}
+.limbs b{font-weight:400;font-size:15px}
+.limbs span{font-size:12px;color:var(--quiet)}
+.limbs div.mvg span{color:rgba(0,0,0,.6)}
+.gauges{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.gauges div{display:grid;justify-items:center;gap:2px}
+.gauges svg{width:100%;max-width:64px;height:auto;overflow:visible}
+.gauges b{font-weight:400;font-size:15px;font-variant-numeric:tabular-nums}
+.gauges span{font-size:11px;color:var(--quiet);text-align:center;line-height:1.15}
+.rnotes{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rnotes li{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:10px;border-radius:10px;background:#060707;opacity:.55;transition:opacity .3s,background .3s;cursor:pointer}
+.rnotes li.on{opacity:1;background:#1b1c1c}
+.rnotes b{font-weight:400;font-size:15px;display:block}
+.rnotes p{margin:2px 0 0;font-size:13.5px;color:var(--quiet);line-height:1.35}
+.rnotes .keep{display:inline-block;margin-left:6px;font-size:11px;padding:2px 7px;border-radius:999px;background:var(--white);color:#000;vertical-align:2px}
+.rnow{display:none}
+.fine{font-size:13px;margin-top:12px;max-width:60em}
+@media (max-width:900px){.rbox{grid-template-columns:1fr}.reel .mv,.reel .rpin{display:none}
+  .rnow{display:grid;gap:3px;min-height:92px;align-content:start;padding:12px 14px;border-radius:14px;background:var(--tile);transition:background .3s,color .3s}
+  .rnow b{font-weight:400;font-size:17px;line-height:1.25}.rnow #rnd{font-size:14px;color:var(--quiet)}
+  .rnow.isnote{background:var(--white);color:#000}.rnow.isnote .mono,.rnow.isnote #rnd{color:rgba(0,0,0,.6)}.mv{max-width:72%;padding:8px 11px}.mv b,.rpin b{font-size:15px}.rpin{max-width:82%;padding:10px 12px}.rpin span:last-child{font-size:13px}.reel .tc2{display:none}.mv{left:10px;top:10px}.mv .mono{font-size:10px}.rpin{left:10px;bottom:10px}.rrow{flex-wrap:wrap}.rclips{flex-wrap:nowrap}.rtc{font-size:12px}.gauges b{font-size:13px}.gauges span{font-size:10px}}
 
 /* better than the eye: same clip, your eye vs Grip */
 .eyebox{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px}
@@ -548,15 +603,28 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 <section class="pad" id="real">
   <div class="head reveal">
     <h2>On a real climb.</h2>
-    <p class="lead">Two goes at BlocFit, filmed on a phone and run through Grip. The blue lines are what it sees, frame by frame.</p>
+    <p class="lead">Two goes at BlocFit, filmed on a phone and run through Grip. Every move it spots, every angle it measures, and what it would tell you after.</p>
   </div>
-  <div class="reveal">
-    <div class="reel" id="reel">
-      <video id="rv" muted playsinline loop preload="none" poster="clips/blocfit-traverse.jpg" aria-label="A climber traversing at BlocFit, tracked in blue"></video>
-      <div class="lbl"><button class="pill w" data-clip="traverse">Traverse</button><button class="pill" data-clip="window">By the window</button></div>
+  <div class="rbox reveal">
+    <div class="reel" id="reel" role="button" tabindex="0" aria-label="Play or pause the clip">
+      <video id="rv" muted playsinline loop preload="none" poster="clips/blocfit-traverse.jpg" aria-label="A climber at BlocFit, tracked in blue, with Grip's read-out drawn over it"></video>
+      <svg id="rhud" viewBox="0 0 1080 608" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+      <div class="mv" id="mv"><span class="mono q" id="mvn">Move 1 of 6</span><b id="mvl">Watching</b><span class="mono" id="mvd"></span></div>
+      <div class="rpin" id="rpin"><span class="mono q" id="rpt"></span><b id="rph"></b><span id="rpc"></span></div>
       <span class="tc2 mono q">Faces blurred</span>
+      <span class="paused mono" id="rpause">Paused. Tap to play.</span>
+    </div>
+    <div class="rnow" id="rnow" aria-live="polite"><span class="mono q" id="rnn"></span><b id="rnl">Watching</b><span id="rnd"></span></div>
+    <div class="rpanel">
+      <div class="rrow"><div class="rclips"><button class="pill w" data-clip="traverse">Traverse</button><button class="pill" data-clip="window">By the window</button></div><span class="mono rtc" id="rtc">0:00.0</span></div>
+      <div class="rtl" id="rtl" aria-label="Timeline: moves and notes. Tap to jump."><i id="rhead"></i></div>
+      <div class="rlegend mono q"><span><i class="h"></i>Hands</span><span><i class="f"></i>Feet</span><span><i class="n"></i>Notes</span></div>
+      <div class="limbs" id="limbs"></div>
+      <div class="gauges" id="gauges"></div>
+      <ol class="rnotes" id="rnotes"></ol>
     </div>
   </div>
+  <p class="fine q">Angles are measured from the video in 2D, so read them as about. Distances are estimated from a 50 cm torso. The notes here are Grip's read of these frames.</p>
 </section>
 
 <section class="pad" id="train">
@@ -723,15 +791,129 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     });
   });
 
-  /* real clips (20 Oct 2026, faces blurred): load when near, 720 copies on phones, pills swap the clip */
-  var rv = $('#rv'), small720 = innerWidth <= 760, clip = 'traverse';
-  function setClip(c) { clip = c; rv.poster = 'clips/blocfit-' + c + '.jpg'; rv.src = 'clips/blocfit-' + c + (small720 ? '-720' : '') + '.mp4'; if (!reduce) { var pr = rv.play(); if (pr && pr.catch) pr.catch(function () {}); } }
-  $$('#reel [data-clip]').forEach(function (b) { b.addEventListener('click', function () { $$('#reel [data-clip]').forEach(function (x) { x.classList.toggle('w', x === b); }); setClip(b.dataset.clip); }); });
+  /* real clips (20 Oct 2026, faces blurred): load when near, 720 copies on phones. The read-out is driven by the
+     tracker's JSON (RDATA, inlined by build.py): joints at 10 fps, angles, moves and notes, synced to the video clock. */
+  var RDATA = {{RDATA}};
+  var rv = $('#rv'), reel = $('#reel'), hud = $('#rhud'), small720 = innerWidth <= 760, clip = 'traverse', RD = RDATA[clip];
+  var LIMB = { left_hand: ['LH', 'Left hand', 'left_wrist', 'h'], right_hand: ['RH', 'Right hand', 'right_wrist', 'h'], left_foot: ['LF', 'Left foot', 'left_ankle', 'f'], right_foot: ['RF', 'Right foot', 'right_ankle', 'f'] };
+  var GA = [['l_elbow', 'Left elbow'], ['r_elbow', 'Right elbow'], ['l_knee', 'Left knee'], ['r_knee', 'Right knee'], ['hip', 'Hip']];
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(n, a, p) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+  function fmt(t) { return Math.floor(t / 60) + ':' + ('0' + (t % 60).toFixed(1)).slice(-4); }
+  $('#limbs').innerHTML = Object.keys(LIMB).map(function (k) { return '<div data-l="' + k + '"><b>' + LIMB[k][0] + '</b><span>On</span></div>'; }).join('');
+  $('#gauges').innerHTML = GA.map(function (g) { return '<div data-g="' + g[0] + '"><svg viewBox="0 0 64 36"><path d="M6 32a26 26 0 0 1 52 0" fill="none" stroke="rgba(243,243,240,.14)" stroke-width="5" stroke-linecap="round"/><path class="ga" d="M6 32a26 26 0 0 1 52 0" fill="none" stroke="#F3F3F0" stroke-width="5" stroke-linecap="round" pathLength="180" stroke-dasharray="0 180"/></svg><b>–</b><span>' + g[1] + '</span></div>'; }).join('');
+  var limbEls = {}; $$('#limbs [data-l]').forEach(function (d) { limbEls[d.dataset.l] = d; });
+  var gEls = {}; $$('#gauges [data-g]').forEach(function (d) { gEls[d.dataset.g] = { arc: $('.ga', d), num: $('b', d) }; });
+  /* hud layers: reach line, contact rings with labels, hip marker */
+  var gReach = el('g', {}, hud), reachLine = el('line', { stroke: '#F3F3F0', 'stroke-width': 3, 'stroke-dasharray': '2 9', 'stroke-linecap': 'round', opacity: 0 }, gReach);
+  var reachTxt = el('text', { fill: '#F3F3F0', 'font-size': 26, 'font-family': 'DM Mono, monospace', opacity: 0 }, gReach);
+  var rings = {};
+  Object.keys(LIMB).forEach(function (k) {
+    var g0 = el('g', { opacity: 0 }, hud), g = el('g', {}, g0);
+    var r = el('circle', { r: 22, fill: 'none', stroke: '{{LINE}}', 'stroke-width': 3 }, g);
+    var r2 = el('circle', { r: 22, fill: 'none', stroke: '{{LINE}}', 'stroke-width': 2, opacity: 0 }, g);
+    var bg = el('rect', { x: 26, y: -16, width: 46, height: 30, rx: 8, fill: 'rgba(0,0,0,.7)' }, g);
+    var tx = el('text', { x: 49, y: 6, fill: '#F3F3F0', 'font-size': 18, 'font-family': 'DM Mono, monospace', 'text-anchor': 'middle' }, g); tx.textContent = LIMB[k][0];
+    rings[k] = { g: g0, s: g, r: r, r2: r2 };
+  });
+  var hipG0 = el('g', { opacity: 0 }, hud), hipG = el('g', {}, hipG0);
+  el('path', { d: 'M-16 0H16M0 -16V16', stroke: '#F3F3F0', 'stroke-width': 2.5 }, hipG);
+  el('circle', { r: 9, fill: 'none', stroke: '#F3F3F0', 'stroke-width': 2.5 }, hipG);
+  var hipBg = el('rect', { x: 18, y: -15, width: 112, height: 30, rx: 8, fill: 'rgba(0,0,0,.7)' }, hipG);
+  var hipTx = el('text', { x: 28, y: 6, fill: '#F3F3F0', 'font-size': 18, 'font-family': 'DM Mono, monospace' }, hipG);
+  function frameAt(t) {
+    var F = RD.frames, i = Math.max(0, Math.min(F.length - 1, Math.floor(t * 10))), a = F[i], b = F[Math.min(F.length - 1, i + 1)], u = Math.max(0, Math.min(1, t * 10 - i));
+    function mix(p, q) { if (!p) return q && u > .5 ? q : (p || null); if (!q) return p; return [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u]; }
+    var pts = {}, ang = {};
+    for (var k in a.pts) pts[k] = mix(a.pts[k], b.pts[k]);
+    for (var g in a.angles) ang[g] = a.angles[g] == null ? b.angles[g] : (b.angles[g] == null ? a.angles[g] : a.angles[g] + (b.angles[g] - a.angles[g]) * u);
+    return { pts: pts, ang: ang };
+  }
+  function buildTimeline() {
+    var tl = $('#rtl'), D = RD.duration;
+    $$('.seg,.nm', tl).forEach(function (e) { e.remove(); });
+    RD.moves.forEach(function (m, i) { var d = document.createElement('i'); d.className = 'seg ' + LIMB[m.limb][3]; d.style.left = (m.t_start / D * 100) + '%'; d.style.width = Math.max(1.2, (m.t_end - m.t_start) / D * 100) + '%'; d.dataset.i = i; tl.insertBefore(d, $('#rhead')); });
+    RD.notes.forEach(function (n) { var d = document.createElement('i'); d.className = 'nm'; d.style.left = (n.t / D * 100) + '%'; tl.insertBefore(d, $('#rhead')); });
+    $('#rnotes').innerHTML = RD.notes.map(function (n, i) { return '<li data-i="' + i + '"><span class="mono q">' + fmt(n.t) + '</span><div><b>' + n.title + (n.good ? '<span class="keep">Keep this</span>' : '') + '</b><p>' + n.cue + '</p></div></li>'; }).join('');
+    $$('#rnotes li').forEach(function (li) { li.addEventListener('click', function () { seek(RD.notes[+li.dataset.i].t - .3); }); });
+  }
+  function seek(t) { if (!rv.src) setClip(clip); try { rv.currentTime = Math.max(0, t); } catch (_) {} }
+  $('#rtl').addEventListener('click', function (e) { var r = this.getBoundingClientRect(); seek((e.clientX - r.left) / r.width * RD.duration); });
+  var lastMove = -2, lastNote = -2;
+  function draw() {
+    var t = rv.currentTime || 0, D = RD.duration; t = Math.min(t, D - .01);
+    var f = frameAt(t), W = 1080, H = 608, K = Math.max(1, Math.min(2.4, 1080 / Math.max(1, hud.clientWidth) * .55)), SK = 'scale(' + K.toFixed(2) + ')';
+    reachTxt.setAttribute('font-size', (26 * K).toFixed(0)); reachLine.setAttribute('stroke-width', (3 * K).toFixed(1));
+    $('#rtc').textContent = fmt(t) + ' / ' + fmt(D);
+    $('#rhead').style.left = (t / D * 100) + '%';
+    /* active move */
+    var mi = -1; RD.moves.forEach(function (m, i) { if (t >= m.t_start - .15 && t <= m.t_end + .5) mi = i; });
+    $$('#rtl .seg').forEach(function (d) { d.classList.toggle('on', +d.dataset.i === mi); });
+    if (mi !== lastMove) {
+      var mv = $('#mv'); lastMove = mi;
+      if (mi < 0) { mv.classList.add('idle'); $('#mvn').textContent = RD.moves.length + ' moves spotted'; $('#mvl').textContent = 'Holding'; $('#mvd').textContent = ''; }
+      else { var m = RD.moves[mi]; mv.classList.remove('idle', 'pop'); void mv.offsetWidth; mv.classList.add('pop'); $('#mvn').textContent = 'Move ' + (mi + 1) + ' of ' + RD.moves.length; $('#mvl').textContent = m.label; $('#mvd').textContent = '≈' + m.distance_cm + ' cm travelled'; }
+    }
+    var moving = mi >= 0 ? RD.moves[mi].limb : null, on = 0;
+    Object.keys(LIMB).forEach(function (k) {
+      var p = f.pts[LIMB[k][2]], R = rings[k], isM = k === moving && t <= RD.moves[mi].t_end + .1;
+      if (!isM) on++;
+      limbEls[k].classList.toggle('mvg', isM); $('span', limbEls[k]).textContent = isM ? 'Moving' : (p ? 'On' : 'Hidden');
+      if (!p) { R.g.setAttribute('opacity', 0); return; }
+      R.s.setAttribute('transform', SK); R.g.setAttribute('opacity', isM ? 1 : .85); R.g.setAttribute('transform', 'translate(' + (p[0] * W).toFixed(1) + ' ' + (p[1] * H).toFixed(1) + ')');
+      var ph = (t * 1.4 + k.length * .13) % 1; R.r2.setAttribute('r', 22 + ph * 26); R.r2.setAttribute('opacity', isM ? (1 - ph) * .9 : 0);
+      R.r.setAttribute('stroke-width', isM ? 4 : 3);
+    });
+    /* reach line from where the limb started to where it is */
+    if (moving && t <= RD.moves[mi].t_end + .5) {
+      var m2 = RD.moves[mi], p0 = frameAt(m2.t_start).pts[LIMB[moving][2]], p1 = f.pts[LIMB[moving][2]];
+      if (p0 && p1) {
+        reachLine.setAttribute('x1', p0[0] * W); reachLine.setAttribute('y1', p0[1] * H); reachLine.setAttribute('x2', p1[0] * W); reachLine.setAttribute('y2', p1[1] * H); reachLine.setAttribute('opacity', .9);
+        var prog = Math.max(0, Math.min(1, (t - m2.t_start) / Math.max(.2, m2.t_end - m2.t_start)));
+        reachTxt.textContent = '≈' + Math.round(m2.distance_cm * prog) + ' cm'; reachTxt.setAttribute('x', (p0[0] + p1[0]) / 2 * W + 14); reachTxt.setAttribute('y', (p0[1] + p1[1]) / 2 * H - 10); reachTxt.setAttribute('opacity', 1);
+      }
+    } else { reachLine.setAttribute('opacity', 0); reachTxt.setAttribute('opacity', 0); }
+    /* hip marker with its angle */
+    var hp = f.pts.hip_mid;
+    if (hp) { hipG0.setAttribute('opacity', 1); hipG.setAttribute('transform', SK); hipG0.setAttribute('transform', 'translate(' + (hp[0] * W).toFixed(1) + ' ' + (hp[1] * H).toFixed(1) + ')'); hipTx.textContent = f.ang.hip != null ? 'Hip ≈' + Math.round(f.ang.hip) + '°' : 'Hip'; if (hp[0] > .78) { hipBg.setAttribute('x', -130); hipTx.setAttribute('x', -120); } else { hipBg.setAttribute('x', 18); hipTx.setAttribute('x', 28); } }
+    else hipG0.setAttribute('opacity', 0);
+    /* gauges */
+    GA.forEach(function (g) { var v = f.ang[g[0]], E = gEls[g[0]]; if (v == null) { E.num.textContent = '–'; E.arc.setAttribute('opacity', 0); } else { E.arc.setAttribute('opacity', 1); E.num.textContent = '≈' + Math.round(v) + '°'; E.arc.setAttribute('stroke-dasharray', Math.max(0, Math.min(180, v)).toFixed(1) + ' 180'); } });
+    /* note pin */
+    var ni = -1; RD.notes.forEach(function (n, i) { if (t >= n.t - .2 && t <= n.t + 2.6) ni = i; });
+    if (ni !== lastNote) {
+      lastNote = ni; $$('#rnotes li').forEach(function (li) { li.classList.toggle('on', +li.dataset.i === ni); });
+      var pin = $('#rpin');
+      if (ni < 0) pin.classList.remove('on');
+      else { var n = RD.notes[ni]; $('#rpt').textContent = fmt(n.t) + (n.good ? ' / Keep this' : ' / Note ' + (ni + 1) + ' of ' + RD.notes.length); $('#rph').textContent = n.title + ': ' + n.body; $('#rpc').textContent = n.cue; pin.classList.add('on'); }
+    }
+  }
+  /* phones: one line under the video carries the current move, or the note when one is up */
+  var nowKey = '';
+  function now() {
+    var t = rv.currentTime || 0, key = lastMove + '/' + lastNote; if (key === nowKey) return; nowKey = key;
+    var box = $('#rnow');
+    if (lastNote >= 0) { var n = RD.notes[lastNote]; box.classList.add('isnote'); $('#rnn').textContent = fmt(n.t) + (n.good ? ' / Keep this' : ' / Note ' + (lastNote + 1) + ' of ' + RD.notes.length); $('#rnl').textContent = n.title + ': ' + n.body; $('#rnd').textContent = n.cue; }
+    else if (lastMove >= 0) { var m = RD.moves[lastMove]; box.classList.remove('isnote'); $('#rnn').textContent = 'Move ' + (lastMove + 1) + ' of ' + RD.moves.length; $('#rnl').textContent = m.label; $('#rnd').textContent = '≈' + m.distance_cm + ' cm travelled'; }
+    else { box.classList.remove('isnote'); $('#rnn').textContent = RD.moves.length + ' moves spotted'; $('#rnl').textContent = 'Holding'; $('#rnd').textContent = 'Tap the video to pause. Tap the timeline to jump.'; }
+  }
+  (function tick() { if (RD) { draw(); now(); } requestAnimationFrame(tick); })();
+  function setClip(c) {
+    clip = c; RD = RDATA[c]; lastMove = lastNote = -2; nowKey = ''; buildTimeline();
+    rv.poster = 'clips/blocfit-' + c + '.jpg'; rv.src = 'clips/blocfit-' + c + (small720 ? '-720' : '') + '.mp4';
+    if (!reduce) { var pr = rv.play(); if (pr && pr.catch) pr.catch(function () {}); }
+  }
+  buildTimeline();
+  $$('#real [data-clip]').forEach(function (b) { b.addEventListener('click', function () { $$('#real [data-clip]').forEach(function (x) { x.classList.toggle('w', x === b); }); setClip(b.dataset.clip); }); });
+  function toggle() { if (!rv.src) { setClip(clip); return; } if (rv.paused) rv.play().catch(function () {}); else rv.pause(); }
+  reel.addEventListener('click', toggle);
+  reel.addEventListener('keydown', function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
+  rv.addEventListener('pause', function () { reel.classList.add('is-paused'); }); rv.addEventListener('play', function () { reel.classList.remove('is-paused'); });
   if ('IntersectionObserver' in window) {
-    var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { if (!rv.src) setClip(clip); else if (!reduce) rv.play().catch(function () {}); } else if (rv.src) rv.pause(); }); }, { rootMargin: '200px 0px' });
+    var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { if (!rv.src) setClip(clip); else if (!reduce && !reel.dataset.held) rv.play().catch(function () {}); } else if (rv.src) rv.pause(); }); }, { rootMargin: '200px 0px' });
     vio.observe(rv);
   } else setClip(clip);
-  if (reduce) rv.controls = true;
+  if (reduce) rv.removeAttribute('loop');
 
   /* header goes solid once you scroll */
   var top = $('#top');

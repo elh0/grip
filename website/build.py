@@ -24,6 +24,16 @@ REEL = '<svg aria-label="A climber tracked as lines and joints, with notes pinne
 pose = open(os.path.join(HERE, 'pose.js')).read()  # hand-keyed heel hook, triangle and muscle-up (19 Oct 2026)
 # Web app URL of the shared "App signups" sheet (Elliot, 20 Oct 2026: one sheet for every app; Grip tab). Empty = demo forms.
 SHEET = 'https://script.google.com/macros/s/AKfycbyAiPN1LOlTFbZZqsByr86l-Uc_9zBqYRrgudf9A6UbW7m2mP7H46oYghL8HYOEminiwg/exec'
+# Real-climb read-out data (20 Oct 2026): the tracker's per-clip JSON from the app thread (website/clips/*.json), trimmed and inlined.
+import json
+RD = {}
+for c in ('traverse', 'window'):
+    jp = os.path.join(HERE, 'clips', 'blocfit-' + c + '.json')
+    d = json.load(open(jp))
+    def rnd(v): return None if v is None else [round(v[0], 4), round(v[1], 4)]
+    RD[c] = {'duration': d['duration'], 'moves': d['moves'], 'notes': d['notes'],
+             'frames': [{'t': f['t'], 'pts': {k: rnd(v) for k, v in f['pts'].items()}, 'angles': f['angles']} for f in d['frames']]}
+v8 = v8.replace('{{RDATA}}', json.dumps(RD, separators=(',', ':'), ensure_ascii=False))
 v8 = v8.replace('{{SHEET}}', SHEET).replace('{{REEL}}', REEL).replace('{{POSE}}', pose).replace('{{ENGINE}}', engine).replace('{{WORD}}', word).replace('{{MARK}}', mark).replace('{{LINE}}', LINE)
 assert '{{' not in v8
 # doctype + charset so £ and × survive when served as a plain file on g-r-i-p.com (caught by the studio site thread, 19 Oct 2026)
