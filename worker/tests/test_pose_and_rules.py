@@ -8,7 +8,7 @@ from coach_worker.pose import POINTS, Point, PoseFrame, angle, draw_wireframe, m
 from coach_worker.sports import Flag, dedupe, get_sport
 
 
-def standing(t=0.0, elbow_bend=False, dx=0.0, ankle_dy=0.0) -> PoseFrame:
+def standing(t=0.0, elbow_bend=False, dx=0.0, ankle_dy=0.0, overhead=False) -> PoseFrame:
     p = {
         "nose": (0.5, 0.1), "left_shoulder": (0.45, 0.25), "right_shoulder": (0.55, 0.25),
         "left_elbow": (0.45, 0.4), "right_elbow": (0.55, 0.4),
@@ -19,6 +19,9 @@ def standing(t=0.0, elbow_bend=False, dx=0.0, ankle_dy=0.0) -> PoseFrame:
         "left_ankle": (0.46, 0.9 - ankle_dy), "right_ankle": (0.54, 0.9),
         "left_foot": (0.47, 0.93), "right_foot": (0.55, 0.93),
     }
+    if overhead:  # hanging from a hold: elbow and hand above the shoulder
+        p["left_elbow"] = (0.45, 0.1)
+        p["left_wrist"] = (0.55, 0.1) if elbow_bend else (0.45, -0.05)
     return measure(PoseFrame(t=t, points={k: Point(x + dx, y) for k, (x, y) in p.items()}))
 
 
@@ -47,10 +50,19 @@ def test_low_visibility_points_are_ignored():
     assert "left_elbow" not in pf.angles
 
 
-def test_climbing_flags_bent_arm_when_static():
-    frames = [standing(0.0, elbow_bend=True), standing(0.2, elbow_bend=True)]
-    flags = get_sport("climbing").rules(frames)
-    assert any(f.body_part == "Left arm" for f in flags)
+def test_climbing_flags_bent_arm_when_hanging_still():
+    frames = [standing(i * 0.2, elbow_bend=True, overhead=True) for i in range(6)]
+    flags = [f for f in get_sport("climbing").rules(frames) if f.body_part == "Left arm"]
+    assert len(flags) == 1, "one flag per hang, not one per frame"
+    assert flags[0].t == 0.0 and "1.0s" in flags[0].message
+
+
+def test_climbing_ignores_short_or_low_bent_arms():
+    rules = get_sport("climbing").rules
+    brief = [standing(i * 0.2, elbow_bend=True, overhead=True) for i in range(3)]
+    assert not [f for f in rules(brief) if f.body_part == "Left arm"], "a moment mid-move is fine"
+    pushing = [standing(i * 0.2, elbow_bend=True) for i in range(6)]
+    assert not [f for f in rules(pushing) if f.body_part == "Left arm"], "hand below shoulder"
 
 
 def test_climbing_flags_foot_cut():

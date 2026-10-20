@@ -42,7 +42,7 @@ def test_tidy_caps_at_three_sorts_and_clamps():
 def test_brief_includes_profile_flags_and_angles():
     brief = build_brief(ctx(level="advanced", injuries="left shoulder", athlete_note="crux 0:04"),
                         [Flag(4.2, "Left arm", "bent")], ["- 0:04: left_elbow 95"])
-    for text in ("Board climbing", "advanced", "left shoulder", "crux 0:04", "0:04 Left arm",
+    for text in ("Bouldering", "advanced", "left shoulder", "crux 0:04", "0:04 Left arm",
                  "left_elbow 95"):
         assert text in brief
 

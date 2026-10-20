@@ -38,8 +38,8 @@ class StubDetector:
             "nose", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
             "left_wrist", "right_wrist", "left_hip", "right_hip", "left_knee", "right_knee",
             "left_ankle", "right_ankle", "left_foot", "right_foot")}
-        pts.update(left_shoulder=Point(0.45, 0.3), left_elbow=Point(0.45, 0.45),
-                   left_wrist=Point(0.55, 0.45), right_shoulder=Point(0.55, 0.3),
+        pts.update(left_shoulder=Point(0.45, 0.3), left_elbow=Point(0.45, 0.15),
+                   left_wrist=Point(0.55, 0.15), right_shoulder=Point(0.55, 0.3),
                    left_hip=Point(0.46, 0.6), right_hip=Point(0.54, 0.6))
         return measure(PoseFrame(t=t, points=pts))
 
