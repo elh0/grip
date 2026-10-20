@@ -21,8 +21,8 @@ v8 = open(os.path.join(HERE, 'site-v8.html')).read()
 # REEL: the tracked climber stands in until Elliot's real clip arrives (then swap in a muted looping <video>).
 REEL = '<svg aria-label="A climber tracked as lines and joints, with notes pinned to the moment"></svg>'
 pose = open(os.path.join(HERE, 'pose.js')).read()  # hand-keyed heel hook, triangle and muscle-up (19 Oct 2026)
-# Apps Script web app URL for the "Grip signups" Google Sheet (Elliot, 20 Oct 2026; script in signup-apps-script.gs). Empty = demo forms.
-SHEET = ''
+# Web app URL of the shared "App signups" sheet (Elliot, 20 Oct 2026: one sheet for every app; Grip tab). Empty = demo forms.
+SHEET = 'https://script.google.com/macros/s/AKfycbyAiPN1LOlTFbZZqsByr86l-Uc_9zBqYRrgudf9A6UbW7m2mP7H46oYghL8HYOEminiwg/exec'
 v8 = v8.replace('{{SHEET}}', SHEET).replace('{{REEL}}', REEL).replace('{{POSE}}', pose).replace('{{ENGINE}}', engine).replace('{{WORD}}', word).replace('{{MARK}}', mark).replace('{{LINE}}', LINE)
 assert '{{' not in v8
 # doctype + charset so £ and × survive when served as a plain file on g-r-i-p.com (caught by the studio site thread, 19 Oct 2026)
