@@ -1,6 +1,7 @@
 # Builds the Grip website: python3 website/build.py  (no dependencies) -> website/index.html
 # Pulls the locked wordmark, crimp mark and wireframe engine from ../brand so the site never drifts from the identity.
 # Working copy also lives in the Eltio project files (eltio/grip/website/); keep the two in sync.
+# LIVE at https://g-r-i-p.com from repo elh0/grip-site (20 Oct 2026). It does not sync: after a rebuild, copy index.html, 404.html, CNAME and assets/ into elh0/grip-site and push main.
 import os, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRAND = os.path.join(HERE, '..', 'brand')
