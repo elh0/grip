@@ -678,23 +678,21 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
   var $ = function (s, r) { return (r || document).querySelector(s); }, $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* signup: hands the email to the Tally form (popup, prefilled) so sign-ups land in Elliot's Tally sheet.
-     TALLY is set in build.py; empty means the page stays in demo mode and nothing leaves it. */
-  var TALLY = '{{TALLY}}';
-  if (TALLY) { var ts = document.createElement('script'); ts.src = 'https://tally.so/widgets/embed.js'; ts.async = true; document.head.appendChild(ts); }
+  /* signup: posts email + type to Elliot's "Grip signups" Google Sheet through its Apps Script web app (website/signup-apps-script.gs).
+     SHEET is set in build.py; empty means the page stays in demo mode and nothing leaves it. */
+  var SHEET = '{{SHEET}}';
   $$('form.form').forEach(function (fm) {
     fm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var inp = $('input', fm), n = fm.parentNode.querySelector('.note');
+      var inp = $('input', fm), n = fm.parentNode.querySelector('.note'), btn = $('button', fm);
       if (!inp.value || !inp.checkValidity()) { n.textContent = 'Enter an email, like you@email.com'; inp.focus(); return; }
-      if (!TALLY) { n.textContent = 'Demo only: ' + inp.value + ' would go on the list.'; inp.value = ''; return; }
-      var type = inp.id === 'e3' ? 'coach' : 'beta', email = inp.value;
-      if (window.Tally) {
-        Tally.openPopup(TALLY, { layout: 'modal', width: 480, hiddenFields: { email: email, type: type },
-          onSubmit: function () { n.textContent = "You're on the list. We'll email " + email + ' when it opens.'; inp.value = ''; } });
-      } else {
-        window.open('https://tally.so/r/' + TALLY + '?email=' + encodeURIComponent(email) + '&type=' + type, '_blank', 'noopener');
-      }
+      if (!SHEET) { n.textContent = 'Demo only: ' + inp.value + ' would go on the list.'; inp.value = ''; return; }
+      var email = inp.value, body = new URLSearchParams({ email: email, type: inp.id === 'e3' ? 'coach' : 'beta', page: location.pathname + location.hash });
+      btn.disabled = true; n.textContent = 'Adding you...';
+      fetch(SHEET, { method: 'POST', mode: 'no-cors', body: body })
+        .then(function () { n.textContent = "You're on the list. We'll email " + email + ' when it opens.'; inp.value = ''; })
+        .catch(function () { n.textContent = "That didn't go through. Check your connection and try again."; })
+        .then(function () { btn.disabled = false; });
     });
   });
 
