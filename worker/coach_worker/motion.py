@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .pose import MIN_VISIBILITY, POINTS, PoseFrame
+from .pose import MIN_VISIBILITY, POINTS, Point, PoseFrame, measure
 
 TORSO_RANGE = (0.6, 1.6)   # a frame whose torso is outside this ratio of the clip's is someone else
 MAX_JUMP_TORSOS = 1.2      # hips moving further than this between samples: a different body
@@ -182,6 +182,75 @@ def build_track(frames: list[PoseFrame], aspect: float = 1.0,
     _unswap(raw)
     joints = {name: _smooth(a, k) for name, a in raw.items()}
     return Track(t=t, joints=joints, torso=torso)
+
+
+SHOW_FROM, HIDE_BELOW = 0.5, 0.3   # a joint appears once this sure, and goes once below this
+FILL_GAP_S = 0.4                   # a joint lost for this long or less is drawn through the gap
+DRAW_SIGMA_S = 0.07                # smoothing for drawing: about one sample either side at 15 fps
+
+
+def clean_poses(frames: list[PoseFrame], aspect: float = 1.0) -> list[PoseFrame]:
+    """Poses for drawing: one body, left and right kept straight, steady, no flicker.
+
+    Stays in picture coordinates (the drawing goes on the picture). Joints don't blink on and
+    off as the model's confidence wobbles around the cut-off, short losses are bridged, and
+    every joint is smoothed with a small centred window, so nothing lags behind the climber.
+    """
+    keep = _same_body(frames, [IDENTITY] * len(frames), aspect)
+    if len(keep) < 2:
+        return [frames[i] for i in keep]
+    t = np.array([frames[i].t for i in keep])
+    fps = (len(t) - 1) / (t[-1] - t[0]) if t[-1] > t[0] else 15.0
+    torso = float(np.median([_torso(frames[i], aspect) for i in keep]))  # unswap thinks in torsos
+    raw: dict[str, np.ndarray] = {}
+    for name in POINTS:
+        a = np.full((len(keep), 2), np.nan)
+        shown = False
+        for row, i in enumerate(keep):
+            p = frames[i].points.get(name)
+            v = p.visibility if p else 0.0
+            shown = v >= (HIDE_BELOW if shown else SHOW_FROM)
+            if shown:
+                a[row] = (p.x * aspect / torso, p.y / torso)
+        raw[name] = _fill_gaps(a, max(1, int(round(FILL_GAP_S * fps))))
+    _unswap(raw)
+    sigma = max(0.5, DRAW_SIGMA_S * fps)
+    out = []
+    smooth = {n: _gauss(a, sigma) for n, a in raw.items()}
+    for row, ti in enumerate(t):
+        pts = {}
+        for name, a in smooth.items():
+            x, y = a[row]
+            pts[name] = (Point(0.0, 0.0, 0.0) if np.isnan(x)
+                         else Point(float(x * torso / aspect), float(y * torso), 1.0))
+        out.append(measure(PoseFrame(t=float(ti), points=pts)))
+    return out
+
+
+def _fill_gaps(a: np.ndarray, max_gap: int) -> np.ndarray:
+    """Straight-line fill across nan runs of at most max_gap samples with data on both sides."""
+    out = a.copy()
+    seen = ~np.isnan(a[:, 0])
+    idx = np.flatnonzero(seen)
+    for i0, i1 in zip(idx, idx[1:], strict=False):
+        if 1 < i1 - i0 <= max_gap + 1:
+            u = (np.arange(i0 + 1, i1) - i0) / (i1 - i0)
+            out[i0 + 1:i1] = a[i0] + (a[i1] - a[i0]) * u[:, None]
+    return out
+
+
+def _gauss(a: np.ndarray, sigma: float) -> np.ndarray:
+    """Centred Gaussian smoothing over the samples that exist; gaps stay gaps."""
+    r = max(1, int(math.ceil(2.5 * sigma)))
+    k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma) ** 2)
+    seen = ~np.isnan(a[:, 0])
+    vals = np.where(seen[:, None], a, 0.0)
+    num = np.stack([np.convolve(vals[:, j], k, mode="same") for j in range(2)], axis=1)
+    den = np.convolve(seen.astype(float), k, mode="same")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        out = num / den[:, None]
+    out[~seen] = np.nan
+    return out
 
 
 def camera_motion(image_paths: list) -> Camera:

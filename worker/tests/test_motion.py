@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from PIL import Image, ImageFilter
 
-from coach_worker.motion import build_track, camera_motion
+from coach_worker.motion import build_track, camera_motion, clean_poses
 from coach_worker.pose import Point, PoseFrame, measure
 
 
@@ -63,3 +63,21 @@ def test_camera_motion_follows_a_pan(tmp_path):
     # frame 4's left edge is 40 px right of frame 0's: x maps to x + 40/320 in frame 0
     assert cam[4][0][2] == pytest.approx(40 / 320, abs=0.01)
     assert cam[4][1][2] == pytest.approx(0.0, abs=0.01)
+
+
+def test_drawn_joints_dont_blink_and_short_gaps_are_bridged():
+    frames = [body(i / 15) for i in range(30)]
+    for i, v in ((10, 0.45), (11, 0.4), (20, 0.1), (21, 0.1)):
+        frames[i].points["left_wrist"].visibility = v   # wobbles under the cut-off, then lost
+    drawn = clean_poses(frames)
+    assert all(pf.visible("left_wrist") for pf in drawn), "a wobble or a short loss isn't drawn"
+    frames = [body(i / 15) for i in range(30)]
+    for pf in frames[5:25]:
+        pf.points["left_wrist"].visibility = 0.0         # gone for over a second
+    assert not clean_poses(frames)[15].visible("left_wrist")
+
+
+def test_drawn_joints_are_smoothed_without_moving_a_still_body():
+    frames = [body(i / 15, dx=0.01 * (-1) ** i) for i in range(30)]  # one-pixel jitter
+    xs = [pf.visible("nose").x for pf in clean_poses(frames)[3:-3]]
+    assert max(xs) - min(xs) < 0.01

@@ -186,10 +186,70 @@ class PoseDetector:
         self._landmarker.close()
 
 
-def try_detector(model_path: str, video: bool = True) -> PoseDetector | None:
+# COCO's 17 keypoints (YOLO pose) by index, for the fifteen points we use. COCO has no toe
+# point, so the feet are left out and the ankles carry the foot.
+COCO: dict[str, int] = {
+    "nose": 0, "left_shoulder": 5, "right_shoulder": 6, "left_elbow": 7, "right_elbow": 8,
+    "left_wrist": 9, "right_wrist": 10, "left_hip": 11, "right_hip": 12,
+    "left_knee": 13, "right_knee": 14, "left_ankle": 15, "right_ankle": 16,
+}
+
+
+class YoloPoseDetector:
+    """Ultralytics YOLO pose (a `.pt` model): finds every person, tracks each by id.
+
+    It sees bodies whole even when side-on or half hidden, where MediaPipe drops the far arm
+    or leg, so it suits climbing and, later, two bodies in BJJ. It locks onto the biggest
+    person when it first sees one and follows that id; if the id is lost for a second it
+    locks again. Licence: AGPL-3.0, so a closed app needs an Ultralytics licence.
+    """
+
+    RELOCK_S = 1.0
+
+    def __init__(self, model_path: str, imgsz: int = 640):
+        from ultralytics import YOLO  # optional dependency
+
+        self._model = YOLO(model_path)
+        self._imgsz = imgsz
+        self._id: int | None = None
+        self._seen_t = -1e9
+
+    def detect(self, image_path: Path, t: float) -> PoseFrame | None:
+        r = self._model.track(str(image_path), persist=True, verbose=False, imgsz=self._imgsz,
+                              tracker="bytetrack.yaml")[0]
+        if r.keypoints is None or not len(r.keypoints):
+            return None
+        kps = r.keypoints.data.cpu().numpy()
+        boxes = r.boxes.xyxyn.cpu().numpy()
+        ids = r.boxes.id.cpu().numpy().astype(int).tolist() if r.boxes.id is not None \
+            else [None] * len(kps)
+        pick = next((k for k, i in enumerate(ids) if i is not None and i == self._id), None)
+        if pick is None:
+            if t - self._seen_t < self.RELOCK_S and self._id is not None:
+                return None  # our climber is briefly hidden; don't jump to someone else
+            pick = max(range(len(kps)), key=lambda k: (boxes[k][2] - boxes[k][0])
+                       * (boxes[k][3] - boxes[k][1]))
+            self._id = ids[pick]
+        self._seen_t = t
+        h, w = r.orig_shape
+        kp = kps[pick]
+        points = {name: Point(0.0, 0.0, 0.0) for name in POINTS}
+        for name, i in COCO.items():
+            x, y, conf = kp[i]
+            points[name] = Point(float(x) / w, float(y) / h, float(conf))
+        return measure(PoseFrame(t=t, points=points))
+
+    def close(self) -> None:
+        self._model = None
+
+
+def try_detector(model_path: str, video: bool = True):
+    """The detector for a model file: `.pt` is YOLO pose, `.task` MediaPipe. None if unusable."""
     if not model_path or not Path(model_path).is_file():
         return None
     try:
+        if model_path.endswith(".pt"):
+            return YoloPoseDetector(model_path)
         return PoseDetector(model_path, video=video)
     except (ImportError, OSError) as exc:  # not installed, or Linux without libEGL/libGLES
         logging.getLogger(__name__).warning("pose disabled: %s", exc)

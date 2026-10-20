@@ -18,7 +18,6 @@ from coach_worker.share import (
     output_size,
     pose_at,
     render_share,
-    smooth,
     wordmark,
 )
 
@@ -135,13 +134,6 @@ def test_pose_at_interpolates_holds_and_drops():
 def test_pose_at_never_morphs_between_bodies():
     poses = [pf(0.0, 0.2), pf(0.2, 0.8)]                # tracker hopped to another person
     assert pose_at(poses, 0.05).t == 0.0 and pose_at(poses, 0.15).t == 0.2
-    assert smooth(poses)[0].visible("left_hip").x == pytest.approx(0.2)
-
-
-def test_smooth_takes_out_a_jitter():
-    poses = smooth([pf(0.0, 0.4), pf(0.1, 0.5), pf(0.2, 0.4)])
-    assert poses[1].visible("left_hip").x == pytest.approx(0.45)
-    assert poses[0].visible("left_hip").x == pytest.approx(0.4333, abs=1e-3)
 
 
 def test_wordmark_raster():
