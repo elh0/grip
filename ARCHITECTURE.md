@@ -44,7 +44,7 @@ Backend names stay neutral (`coach`, `session`, `critique`) so a rename only tou
 2. `pose.py` (optional, MediaPipe, heavy model) tracks the fifteen points from the identity on
    its own 15 fps stream of 640 px frames, in video mode (one detector per clip, so each frame
    builds on the last), measures knee, elbow and hip angles and a rough centre of mass, and
-   draws the blue wireframe, the centre-of-mass trail and the centre line onto keyframes.
+   draws the blue wireframe and the centre-of-mass trail onto keyframes (the share clip draws the wireframe only).
 3. `motion.py` cleans the poses for the rules: it drops frames that belong to someone else,
    measures how the phone moved (ORB features on the wall, a move/turn/zoom fit per frame) and
    maps joints onto the wall, swaps left and right limbs back when the model mixes them up,

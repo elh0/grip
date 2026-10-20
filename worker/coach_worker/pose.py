@@ -106,7 +106,11 @@ def measure(pf: PoseFrame) -> PoseFrame:
 def draw_pose(draw: ImageDraw.ImageDraw, size: tuple[int, int], pf: PoseFrame,
               trail: list[tuple[float, float]] | None = None, fill=MAT_BLUE,
               line: int | None = None, r: int | None = None) -> None:
-    """Hairline wireframe, joints as open dots, the centre-of-mass trail and centre line."""
+    """Hairline wireframe, joints as open dots, and the centre-of-mass trail if given.
+
+    No line from the weight to the floor: it reached outside the body and read as the
+    tracker misfiring, so the drawing stays on the person.
+    """
     w, h = size
     line = line or max(1, w // 400)
     r = r or max(3, w // 160)
@@ -125,10 +129,6 @@ def draw_pose(draw: ImageDraw.ImageDraw, size: tuple[int, int], pf: PoseFrame,
         if p:
             x, y = xy(p)
             draw.ellipse([x - r, y - r, x + r, y + r], outline=fill, width=line)
-    if pf.com:
-        x, y = pf.com[0] * w, pf.com[1] * h
-        # centre line: dropped from the weight to the floor
-        draw.line([(x, y), (x, h)], fill=fill, width=line)
 
 
 def draw_wireframe(image_path: Path, pf: PoseFrame, out_path: Path,
