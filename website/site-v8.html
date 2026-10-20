@@ -258,7 +258,8 @@ section{padding-block:clamp(110px,14vw,200px) 0}
 .reel .lbl{position:absolute;left:16px;bottom:16px;display:flex;gap:8px;flex-wrap:wrap}
 .reel .lbl span{padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.7);font-size:15px}
 .reel .tc2{position:absolute;right:16px;top:16px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.6)}
-@media (max-width:600px){.reel{aspect-ratio:1/1}}
+.reel .lbl .pill{height:36px;padding-inline:14px;font-size:14px;background:rgba(0,0,0,.7)}
+.reel .lbl .pill.w{background:var(--white);color:#000}
 .reel{max-height:78vh;width:100%}
 
 /* better than the eye: same clip, your eye vs Grip */
@@ -523,7 +524,6 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div class="eyev" id="eyev" role="button" tabindex="0" aria-label="Play or pause the clip">
       <svg id="eyes" aria-label="A climber heel hooking on an overhang, tracked as lines and joints"></svg>
       <span class="tc2 mono" id="etc">FRAME 0 / 330</span>
-      <span class="soon q">Real footage from BlocFit coming soon</span>
       <div class="lbl"><span id="enote">Watching…</span></div>
     </div>
     <div class="eyectl">
@@ -542,6 +542,20 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     <div><b>Measured, not guessed.</b><p>Knee angles in degrees, hips in centimetres off the wall. "Get your hips in" becomes a number you can beat.</p></div>
     <div><b>Remembers every go.</b><p>Your best attempt sits over this one as a ghost, so you see exactly where they split.</p></div>
     <div><b>Spots the pattern.</b><p>Hips dropped on four of five goes, only late in the session? Easy to miss in the room, obvious on the tape.</p></div>
+  </div>
+</section>
+
+<section class="pad" id="real">
+  <div class="head reveal">
+    <h2>On a real climb.</h2>
+    <p class="lead">Two goes at BlocFit, filmed on a phone and run through Grip. The blue lines are what it sees, frame by frame.</p>
+  </div>
+  <div class="reveal">
+    <div class="reel" id="reel">
+      <video id="rv" muted playsinline loop preload="none" poster="clips/blocfit-traverse.jpg" aria-label="A climber traversing at BlocFit, tracked in blue"></video>
+      <div class="lbl"><button class="pill w" data-clip="traverse">Traverse</button><button class="pill" data-clip="window">By the window</button></div>
+      <span class="tc2 mono q">Faces blurred</span>
+    </div>
   </div>
 </section>
 
@@ -708,6 +722,16 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
         .then(function () { btn.disabled = false; });
     });
   });
+
+  /* real clips (20 Oct 2026, faces blurred): load when near, 720 copies on phones, pills swap the clip */
+  var rv = $('#rv'), small720 = innerWidth <= 760, clip = 'traverse';
+  function setClip(c) { clip = c; rv.poster = 'clips/blocfit-' + c + '.jpg'; rv.src = 'clips/blocfit-' + c + (small720 ? '-720' : '') + '.mp4'; if (!reduce) { var pr = rv.play(); if (pr && pr.catch) pr.catch(function () {}); } }
+  $$('#reel [data-clip]').forEach(function (b) { b.addEventListener('click', function () { $$('#reel [data-clip]').forEach(function (x) { x.classList.toggle('w', x === b); }); setClip(b.dataset.clip); }); });
+  if ('IntersectionObserver' in window) {
+    var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { if (!rv.src) setClip(clip); else if (!reduce) rv.play().catch(function () {}); } else if (rv.src) rv.pause(); }); }, { rootMargin: '200px 0px' });
+    vio.observe(rv);
+  } else setClip(clip);
+  if (reduce) rv.controls = true;
 
   /* header goes solid once you scroll */
   var top = $('#top');
