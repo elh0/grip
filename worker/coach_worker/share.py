@@ -23,6 +23,7 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw
 
 from . import frames as fr
+from . import looks
 from .motion import camera_motion
 from .pose import MAT_BLUE, Point, PoseDetector, PoseFrame, draw_pose, measure, try_detector
 from .steady import clean_poses
@@ -225,6 +226,11 @@ def wordmark(height: int, colour=WORDMARK_WHITE, opacity: float = WORDMARK_OPACI
 
 # -- render -----------------------------------------------------------------------------
 
+def _nearest(ts: list[float], t: float) -> int:
+    i = bisect.bisect_left(ts, t)
+    return min((j for j in (i - 1, i) if 0 <= j < len(ts)), key=lambda j: abs(ts[j] - t))
+
+
 def track(video: Path, detector: PoseDetector, work_dir: Path, duration: float,
           pose_fps: float = POSE_FPS) -> list[PoseFrame]:
     sampled = fr.sample_frames(video, work_dir, pose_fps, POSE_WIDTH, end=duration, prefix="p")
@@ -238,12 +244,15 @@ def track(video: Path, detector: PoseDetector, work_dir: Path, duration: float,
 
 
 def render_share(video: Path, out_path: Path, detector: PoseDetector | None, work_dir: Path, *,
-                 poses: list[PoseFrame] | None = None,
+                 poses: list[PoseFrame] | None = None, look: str = "hybrid",
+                 mask_model: str = "",
                  fps: int = OUTPUT_FPS, pose_fps: float = POSE_FPS,
                  max_seconds: float = MAX_SECONDS, max_side: int = MAX_SIDE) -> Path | None:
     """Render the tracked clip to out_path. None when no body was found in the clip.
 
     Pass the review's `poses` to reuse its tracking; otherwise `detector` tracks the clip.
+    `look` is "hybrid" (outline from `mask_model`'s segmentation, plus markers; see looks.py)
+    or "skeleton".
     """
     src = inspect(video)
     duration = min(src.duration, max_seconds)
@@ -253,6 +262,14 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector | None, wor
     if not poses:
         log.info("share skipped: no body tracked in %s", video.name)
         return None
+
+    masks: dict[float, object] = {}
+    if look == "hybrid" and mask_model:
+        masks = looks.segmentation(video, mask_model, work_dir / "mask", pose_fps, POSE_WIDTH,
+                                   end=duration)
+    mask_keys = sorted(masks)
+    rest = looks.resting(poses)
+    sample_t = [p.t for p in poses]
 
     w, h = output_size(src.width, src.height, max_side)
     short = min(w, h)
@@ -284,12 +301,21 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector | None, wor
                 t = i / fps
                 im = Image.frombytes("RGB", (w, h), raw)
                 pf = pose_at(poses, t, opacity=True)
+                if look == "hybrid" and (body := looks.mask_at(masks, mask_keys, t)) is not None:
+                    edge, glow = looks.outline(body, (w, h))
+                    im.paste(MAT_BLUE, mask=glow)
+                    im.paste(MAT_BLUE, mask=edge)
                 if pf:
                     # no centre-of-mass trail: in picture coordinates it lags off the hip
                     # whenever the phone pans, and reads as the tracker losing the body
                     mask = Image.new("L", (w * SUPERSAMPLE, h * SUPERSAMPLE), 0)
-                    draw_pose(ImageDraw.Draw(mask), mask.size, pf, fill=255, opacity=True,
-                              line=line, r=r)
+                    if look == "hybrid":
+                        k = _nearest(sample_t, t)
+                        here = {n for n in looks.CONTACTS if (k, n) in rest}
+                        looks.markers(ImageDraw.Draw(mask), mask.size, pf, here, line, r)
+                    else:
+                        draw_pose(ImageDraw.Draw(mask), mask.size, pf, fill=255, opacity=True,
+                                  line=line, r=r)
                     im.paste(MAT_BLUE, mask=mask.reduce(SUPERSAMPLE))
                 im.paste(mark, mark_box, mark)
                 try:
@@ -315,6 +341,7 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector | None, wor
 def make_share(video: Path, out_path: Path, model_path: str, work_dir: Path,
                poses: list[PoseFrame] | None = None, **render_kw) -> Path | None:
     """Render the share if pose is available. None (and a log line) when it can't be made."""
+    render_kw.setdefault("mask_model", model_path)
     if poses:
         return render_share(video, out_path, None, work_dir, poses=poses, **render_kw)
     detector = try_detector(model_path)

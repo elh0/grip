@@ -95,12 +95,14 @@ def test_render_caps_duration_and_size_and_copies_aac(tmp_path):
     assert abs(duration - 1.5) < 0.1
 
 
-def test_render_draws_blue_body_and_wordmark(tmp_path):
+@pytest.mark.parametrize("look,least", [("skeleton", 200), ("hybrid", 60)])
+def test_render_draws_blue_body_and_wordmark(tmp_path, look, least):
     src = lavfi(tmp_path / "dark.mp4", "color=c=black:size=640x360:rate=30")
-    out = render_share(src, tmp_path / "share.mp4", StubDetector(), tmp_path / "work", **FAST)
+    out = render_share(src, tmp_path / "share.mp4", StubDetector(), tmp_path / "work",
+                       look=look, **FAST)
     f = frame_at(out, 1.0, 640, 360).astype(int)
     blue = (abs(f[..., 0] - 74) < 40) & (abs(f[..., 1] - 116) < 40) & (f[..., 2] > 200)
-    assert blue[:, 250:400].sum() > 200                 # the stub figure sits mid-frame
+    assert blue[:, 250:400].sum() > least               # the stub figure sits mid-frame
     corner = f[300:, 540:]
     assert (corner.min(axis=2) > 180).sum() > 30        # white wordmark, bottom right
     assert f[:60, :100].max() < 40                      # and no other text or chrome
