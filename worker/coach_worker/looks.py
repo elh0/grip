@@ -1,4 +1,10 @@
-"""The share clip's look: the climber's outline plus markers on what Grip measures.
+"""The share clip's looks: trails (the default) and hybrid, both built on markers.
+
+Trails (Elliot's pick, 21 Oct): markers on hands, feet, hips and head, each leaving a short
+fading trail of where it has just been. Trails live on the wall, so a phone pan doesn't
+smear them; they're mapped back into each frame through the camera motion.
+
+Hybrid: the climber's outline plus the same markers.
 
 Chosen over the ball-and-stick skeleton on six test clips (21 Oct): the outline comes from
 the body's own pixels (the pose model's segmentation), so it can't sit off the climber or
@@ -24,6 +30,8 @@ from .pose import PoseFrame
 log = logging.getLogger(__name__)
 
 CONTACTS = ("left_wrist", "right_wrist", "left_ankle", "right_ankle")
+TRAIL_S = 0.6          # how far back a trail reaches
+TRAIL_PEAK = 180       # a trail's opacity at its head (markers are 255)
 MASK_BLEND_S = 0.14   # masks either side of a frame within this are blended: no flicker
 
 
@@ -132,3 +140,48 @@ def markers(draw: ImageDraw.ImageDraw, size: tuple[int, int], pf: PoseFrame,
         x, y, s = nose.x * w, nose.y * h, r * 0.7
         draw.ellipse([x - s, y - s, x + s, y + s], outline=int(round(fill * nose.visibility)),
                      width=line)
+
+
+def _hip(pf: PoseFrame) -> tuple[float, float, float] | None:
+    lh, rh = pf.points.get("left_hip"), pf.points.get("right_hip")
+    if not (lh and rh):
+        return None
+    return (lh.x + rh.x) / 2, (lh.y + rh.y) / 2, min(lh.visibility, rh.visibility)
+
+
+def _point(pf: PoseFrame, name: str) -> tuple[float, float, float] | None:
+    if name == "hip":
+        return _hip(pf)
+    q = pf.points.get(name)
+    return (q.x, q.y, q.visibility) if q else None
+
+
+def trails(draw: ImageDraw.ImageDraw, size: tuple[int, int], drawn: list[PoseFrame],
+           sample_t: list[float], t: float, pf: PoseFrame, line: int) -> None:
+    """Fading trails behind hands, feet and hips over the last TRAIL_S seconds.
+
+    Each past sample goes to the wall through its own camera and comes back into this frame
+    through the nearest sample's, so the trail stays where the limb was on the wall.
+    """
+    w, h = size
+    lo = bisect.bisect_left(sample_t, t - TRAIL_S)
+    hi = bisect.bisect_right(sample_t, t)
+    if hi <= lo:
+        return
+    k = min(max(hi - 1, 0), len(drawn) - 1)
+    cam_now = np.vstack([np.asarray(drawn[k].cam or [[1, 0, 0], [0, 1, 0]], float), [0, 0, 1]])
+    back = np.linalg.inv(cam_now)[:2].tolist()
+    for n in CONTACTS + ("hip",):
+        pts = []
+        for j in range(lo, hi):
+            p = _point(drawn[j], n)
+            if p and p[2] >= 0.5:
+                wx, wy = _to_wall(drawn[j].cam or [[1, 0, 0], [0, 1, 0]], p[0], p[1])
+                x, y = _to_wall(back, wx, wy)
+                pts.append((x * w, y * h, sample_t[j]))
+        now = _point(pf, n)
+        if now and now[2] >= 0.5:
+            pts.append((now[0] * w, now[1] * h, t))
+        for (x0, y0, _), (x1, y1, t1) in zip(pts, pts[1:], strict=False):
+            a = max(0.0, 1 - (t - t1) / TRAIL_S)
+            draw.line([(x0, y0), (x1, y1)], fill=int(TRAIL_PEAK * a), width=line)

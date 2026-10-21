@@ -244,15 +244,15 @@ def track(video: Path, detector: PoseDetector, work_dir: Path, duration: float,
 
 
 def render_share(video: Path, out_path: Path, detector: PoseDetector | None, work_dir: Path, *,
-                 poses: list[PoseFrame] | None = None, look: str = "hybrid",
+                 poses: list[PoseFrame] | None = None, look: str = "trails",
                  mask_model: str = "",
                  fps: int = OUTPUT_FPS, pose_fps: float = POSE_FPS,
                  max_seconds: float = MAX_SECONDS, max_side: int = MAX_SIDE) -> Path | None:
     """Render the tracked clip to out_path. None when no body was found in the clip.
 
     Pass the review's `poses` to reuse its tracking; otherwise `detector` tracks the clip.
-    `look` is "hybrid" (outline from `mask_model`'s segmentation, plus markers; see looks.py)
-    or "skeleton".
+    `look` is "trails" (markers with short fading trails), "hybrid" (outline from
+    `mask_model`'s segmentation, plus markers; see looks.py) or "skeleton".
     """
     src = inspect(video)
     duration = min(src.duration, max_seconds)
@@ -309,7 +309,10 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector | None, wor
                     # no centre-of-mass trail: in picture coordinates it lags off the hip
                     # whenever the phone pans, and reads as the tracker losing the body
                     mask = Image.new("L", (w * SUPERSAMPLE, h * SUPERSAMPLE), 0)
-                    if look == "hybrid":
+                    if look == "trails":
+                        looks.trails(ImageDraw.Draw(mask), mask.size, poses, sample_t, t, pf,
+                                     line)
+                    if look in ("trails", "hybrid"):
                         k = _nearest(sample_t, t)
                         here = {n for n in looks.CONTACTS if (k, n) in rest}
                         looks.markers(ImageDraw.Draw(mask), mask.size, pf, here, line, r)

@@ -95,7 +95,7 @@ def test_render_caps_duration_and_size_and_copies_aac(tmp_path):
     assert abs(duration - 1.5) < 0.1
 
 
-@pytest.mark.parametrize("look,least", [("skeleton", 200), ("hybrid", 60)])
+@pytest.mark.parametrize("look,least", [("skeleton", 200), ("hybrid", 60), ("trails", 60)])
 def test_render_draws_blue_body_and_wordmark(tmp_path, look, least):
     src = lavfi(tmp_path / "dark.mp4", "color=c=black:size=640x360:rate=30")
     out = render_share(src, tmp_path / "share.mp4", StubDetector(), tmp_path / "work",
