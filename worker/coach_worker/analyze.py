@@ -99,6 +99,8 @@ def track_and_flag(video: Path, ctx: CoachContext, settings: Settings, work_dir:
     with Image.open(tracked[0].path) as im:
         aspect = im.width / im.height
     poses = [p for _, p in hits]
+    for i, p in hits:
+        p.cam = camera[i]   # the share clip pins hands and feet to the wall with it
     flags = ctx.sport.rules(poses, aspect=aspect, camera=[camera[i] for i, _ in hits])
     return poses, flags
 

@@ -23,7 +23,7 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw
 
 from . import frames as fr
-from .motion import clean_poses
+from .motion import camera_motion, clean_poses
 from .pose import MAT_BLUE, Point, PoseDetector, PoseFrame, draw_pose, measure, try_detector
 
 log = logging.getLogger(__name__)
@@ -214,7 +214,13 @@ def wordmark(height: int, colour=WORDMARK_WHITE, opacity: float = WORDMARK_OPACI
 def track(video: Path, detector: PoseDetector, work_dir: Path, duration: float,
           pose_fps: float = POSE_FPS) -> list[PoseFrame]:
     sampled = fr.sample_frames(video, work_dir, pose_fps, POSE_WIDTH, end=duration, prefix="p")
-    return [p for f in sampled if (p := detector.detect(f.path, f.t))]
+    camera = camera_motion([f.path for f in sampled])
+    poses = []
+    for f, cam in zip(sampled, camera, strict=True):
+        if p := detector.detect(f.path, f.t):
+            p.cam = cam
+            poses.append(p)
+    return poses
 
 
 def render_share(video: Path, out_path: Path, detector: PoseDetector | None, work_dir: Path, *,

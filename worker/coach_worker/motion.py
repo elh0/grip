@@ -186,20 +186,112 @@ def build_track(frames: list[PoseFrame], aspect: float = 1.0,
 
 SHOW_FROM, HIDE_BELOW = 0.5, 0.3   # a joint appears once this sure, and goes once below this
 FILL_GAP_S = 0.4                   # a joint lost for this long or less is drawn through the gap
-DRAW_SIGMA_S = 0.07                # smoothing for drawing: about one sample either side at 15 fps
+BODY_SIGMA_S = 0.12                # head, shoulders, hips: they move slowly, so smooth hard
+LIMB_SIGMA_S = 0.09                # elbows and knees
+END_SIGMA_S = 0.06                 # hands and feet while they move: keep up with the climber
+EASE_SIGMA_S = 0.04                # softens the step where a held hand starts to move
+HOLD_SPEED = 0.7                   # torso lengths a second: slower than this, a hand or foot is
+HOLD_MIN_S = 0.25                  #   on a hold, if it stays that slow for at least this long
+ENDS = ("left_wrist", "right_wrist", "left_ankle", "right_ankle", "left_foot", "right_foot")
+LIMBS = ("left_elbow", "right_elbow", "left_knee", "right_knee")
+BONE_WINDOW_S = 1.0                # bone lengths are held to their median over about this long
+JOINTS_3 = tuple((f"{s}_{a}", f"{s}_{b}", f"{s}_{c}") for s in ("left", "right")
+                 for a, b, c in (("shoulder", "elbow", "wrist"), ("hip", "knee", "ankle")))
+
+
+def _invert(m) -> np.ndarray:
+    a = np.vstack([np.asarray(m, dtype=float), [0.0, 0.0, 1.0]])
+    return np.linalg.inv(a)[:2]
+
+
+def _hold(a: np.ndarray, fps: float) -> np.ndarray:
+    """Pin a hand or foot to one spot for as long as it rests on a hold.
+
+    The model's guess wanders a few pixels every frame even when a hand is clamped on a hold,
+    and that wander is what makes a skeleton look unsure. In wall coordinates a resting hand
+    doesn't move at all, so each still spell is replaced by its median position.
+    """
+    out = a.copy()
+    seen = ~np.isnan(a[:, 0])
+    if seen.sum() < 3:
+        return out
+    v = np.full(len(a), np.inf)
+    d = np.gradient(np.where(seen[:, None], a, np.nan), axis=0) * fps
+    v[seen] = np.hypot(d[seen, 0], d[seen, 1])
+    still = np.nan_to_num(v, nan=np.inf) < HOLD_SPEED
+    min_len = max(2, int(round(HOLD_MIN_S * fps)))
+    i = 0
+    while i < len(a):
+        if not still[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(a) and still[j + 1]:
+            j += 1
+        if j - i + 1 >= min_len:
+            out[i:j + 1] = np.nanmedian(a[i:j + 1], axis=0)
+        i = j + 1
+    return out
+
+
+def _rolling_median(x: np.ndarray, k: int) -> np.ndarray:
+    out = np.full(len(x), np.nan)
+    for i in range(len(x)):
+        w = x[max(0, i - k):i + k + 1]
+        if np.any(~np.isnan(w)):
+            out[i] = np.nanmedian(w)
+    return out
+
+
+def _rigid_limbs(smooth: dict[str, np.ndarray], fps: float, sigma: float) -> None:
+    """Put each elbow and knee where its two bones, at steady lengths, meet.
+
+    With the shoulder and hand both steady, what's left of the wobble is the elbow sliding
+    about between them, which makes the arm look like it's stretching. Upper arm and forearm
+    are held to their typical length over the last second or so (that still allows for a
+    limb turning towards the camera), and the joint goes to whichever of the two possible
+    meeting points is nearer the model's guess.
+    """
+    k = max(1, int(round(BONE_WINDOW_S * fps / 2)))
+    for root, mid, end in JOINTS_3:
+        a, b, c = smooth[root], smooth[mid], smooth[end]
+        l1 = _rolling_median(np.hypot(*(b - a).T), k)
+        l2 = _rolling_median(np.hypot(*(c - b).T), k)
+        out = b.copy()
+        for i in range(len(b)):
+            if np.isnan(a[i]).any() or np.isnan(b[i]).any() or np.isnan(c[i]).any():
+                continue
+            d = float(np.hypot(*(c[i] - a[i])))
+            r1, r2 = l1[i], l2[i]
+            if d < 1e-9 or np.isnan(r1) or np.isnan(r2):
+                continue
+            u = (c[i] - a[i]) / d
+            if d >= r1 + r2 or d <= abs(r1 - r2):       # can't meet: keep the guess
+                continue
+            x = (d * d + r1 * r1 - r2 * r2) / (2 * d)
+            h = math.sqrt(max(0.0, r1 * r1 - x * x))
+            base = a[i] + u * x
+            n = np.array([-u[1], u[0]])
+            p1, p2 = base + n * h, base - n * h
+            out[i] = p1 if np.hypot(*(p1 - b[i])) <= np.hypot(*(p2 - b[i])) else p2
+        smooth[mid] = _gauss(out, sigma)  # no step where a limb straightens past reach
 
 
 def clean_poses(frames: list[PoseFrame], aspect: float = 1.0) -> list[PoseFrame]:
     """Poses for drawing: one body, left and right kept straight, steady, no flicker.
 
-    Stays in picture coordinates (the drawing goes on the picture). Joints don't blink on and
-    off as the model's confidence wobbles around the cut-off, short losses are bridged, and
-    every joint is smoothed with a small centred window, so nothing lags behind the climber.
+    Comes back in picture coordinates (the drawing goes on the picture), but the cleaning is
+    done on the wall when the frames carry the phone's motion (`PoseFrame.cam`): hands and
+    feet resting on holds are pinned still there, so the phone's panning can't shake them.
+    Joints don't blink on and off as the model's confidence wobbles around the cut-off, short
+    losses are bridged, and every joint is smoothed with a centred window (harder for the
+    slow-moving trunk), so nothing lags behind the climber.
     """
-    keep = _same_body(frames, [IDENTITY] * len(frames), aspect)
+    keep = _same_body(frames, [f.cam or IDENTITY for f in frames], aspect)
     if len(keep) < 2:
         return [frames[i] for i in keep]
     t = np.array([frames[i].t for i in keep])
+    cams = [frames[i].cam or IDENTITY for i in keep]
     fps = (len(t) - 1) / (t[-1] - t[0]) if t[-1] > t[0] else 15.0
     torso = float(np.median([_torso(frames[i], aspect) for i in keep]))  # unswap thinks in torsos
     raw: dict[str, np.ndarray] = {}
@@ -211,19 +303,33 @@ def clean_poses(frames: list[PoseFrame], aspect: float = 1.0) -> list[PoseFrame]
             v = p.visibility if p else 0.0
             shown = v >= (HIDE_BELOW if shown else SHOW_FROM)
             if shown:
-                a[row] = (p.x * aspect / torso, p.y / torso)
+                wx, wy = _to_wall(cams[row], p.x, p.y)
+                a[row] = (wx * aspect / torso, wy / torso)
         raw[name] = _fill_gaps(a, max(1, int(round(FILL_GAP_S * fps))))
     _unswap(raw)
-    sigma = max(0.5, DRAW_SIGMA_S * fps)
+
+    def sig(s: float) -> float:
+        return max(0.5, s * fps)
+
+    smooth: dict[str, np.ndarray] = {}
+    for name, a in raw.items():
+        if name in ENDS:
+            smooth[name] = _gauss(_hold(_gauss(a, sig(END_SIGMA_S)), fps), sig(EASE_SIGMA_S))
+        else:
+            smooth[name] = _gauss(a, sig(LIMB_SIGMA_S if name in LIMBS else BODY_SIGMA_S))
+    _rigid_limbs(smooth, fps, sig(LIMB_SIGMA_S))
+    back = [_invert(c) for c in cams]
     out = []
-    smooth = {n: _gauss(a, sigma) for n, a in raw.items()}
     for row, ti in enumerate(t):
         pts = {}
         for name, a in smooth.items():
             x, y = a[row]
-            pts[name] = (Point(0.0, 0.0, 0.0) if np.isnan(x)
-                         else Point(float(x * torso / aspect), float(y * torso), 1.0))
-        out.append(measure(PoseFrame(t=float(ti), points=pts)))
+            if np.isnan(x):
+                pts[name] = Point(0.0, 0.0, 0.0)
+                continue
+            px, py = _to_wall(back[row], float(x * torso / aspect), float(y * torso))
+            pts[name] = Point(px, py, 1.0)
+        out.append(measure(PoseFrame(t=float(ti), points=pts, cam=cams[row])))
     return out
 
 

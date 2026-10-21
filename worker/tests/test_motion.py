@@ -81,3 +81,16 @@ def test_drawn_joints_are_smoothed_without_moving_a_still_body():
     frames = [body(i / 15, dx=0.01 * (-1) ** i) for i in range(30)]  # one-pixel jitter
     xs = [pf.visible("nose").x for pf in clean_poses(frames)[3:-3]]
     assert max(xs) - min(xs) < 0.01
+
+
+def test_a_hand_on_a_hold_is_pinned_while_the_phone_pans():
+    frames = []
+    for i in range(30):
+        pan = 0.005 * i                     # the phone pans right, so everything slides left
+        f = body(i / 15, dx=-pan)
+        f.points["left_wrist"].x += 0.004 * (-1) ** i   # the model's wobble on a still hand
+        f.cam = [[1.0, 0.0, pan], [0.0, 1.0, 0.0]]
+        frames.append(f)
+    drawn = clean_poses(frames)
+    on_wall = [pf.visible("left_wrist").x + 0.005 * i for i, pf in enumerate(drawn)]
+    assert max(on_wall[4:-4]) - min(on_wall[4:-4]) < 1e-6, "the hand doesn't move on the wall"
