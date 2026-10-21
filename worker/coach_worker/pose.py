@@ -63,6 +63,7 @@ class PoseFrame:
     points: dict[str, Point]
     angles: dict[str, float] = field(default_factory=dict)
     com: tuple[float, float] | None = None
+    cam: list | None = None    # 2x3 map from this frame's picture to the first frame's (the wall)
 
     def visible(self, name: str) -> Point | None:
         p = self.points.get(name)
