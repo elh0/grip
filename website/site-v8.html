@@ -311,6 +311,72 @@ section{padding-block:clamp(110px,14vw,200px) 0}
 .rnotes p{margin:2px 0 0;font-size:13.5px;color:var(--quiet);line-height:1.35}
 .rnotes .keep{display:inline-block;margin-left:6px;font-size:11px;padding:2px 7px;border-radius:999px;background:var(--white);color:#000;vertical-align:2px}
 .rnow{display:none}
+
+/* one go to the next: a tap-through story over real frames (21 Oct 2026) */
+.sbox{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:10px;align-items:stretch}
+.sstage{position:relative;align-self:start;width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#0a0b0b;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;outline-offset:3px}
+.sstage video,.sstage svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sstage video{transition:opacity .5s}
+.sstage svg image,.sstage svg rect{transition:opacity .6s}
+.sbars{position:absolute;left:14px;right:14px;top:12px;display:flex;gap:5px;z-index:2}
+.sbars i{flex:1;height:3px;border-radius:2px;background:rgba(243,243,240,.28);overflow:hidden}
+.sbars i b{display:block;height:100%;background:var(--white);transform-origin:0 50%;transform:scaleX(0)}
+.stag{position:absolute;right:14px;top:26px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.6);z-index:2;opacity:0;transition:opacity .4s}
+.stag.on{opacity:1}
+.sgo{position:absolute;left:18px;top:30px;display:grid;gap:4px;z-index:2;opacity:0;transition:opacity .4s;pointer-events:none}
+.sgo.on{opacity:1}
+.sgo b{font-weight:400;font-size:clamp(28px,3.4vw,44px);letter-spacing:-.04em;line-height:1}
+.sgo .mono{color:var(--quiet)}
+.stag.ex{background:var(--white);color:#000}
+#sover g.f{opacity:0;transition:opacity .5s}
+#sover g.f.in{opacity:1}
+#sover text{font-family:var(--mono);fill:var(--white)}
+.snote{position:absolute;left:50%;top:54%;width:min(420px,78%);transform:translate(-50%,-46%) scale(.96);opacity:0;transition:opacity .5s,transform .6s var(--ease);background:var(--white);color:#000;border-radius:18px;padding:20px;display:grid;gap:7px;z-index:2;pointer-events:none;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.snote.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.snote .q{color:rgba(0,0,0,.55)}
+.snote b{font-weight:400;font-size:22px;line-height:1.15;letter-spacing:-.02em}
+.snote span{font-size:15px;line-height:1.35}
+.snote i{height:1px;background:rgba(0,0,0,.12);margin:6px 0}
+.snote div{display:flex;gap:6px;margin-top:6px}
+.snote .pill{font-style:normal;height:30px;font-size:13px;background:rgba(0,0,0,.07)}
+.snote .pill.w{background:#000;color:var(--white)}
+.spanel{background:var(--tile);border-radius:18px;padding:14px 16px;display:grid;gap:8px;align-content:space-between;min-width:0}
+.schap{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.schap button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:28px 1fr;gap:2px 8px;padding:8px 12px;border-radius:12px;transition:background .3s}
+.schap button:focus-visible{outline:2px solid var(--line)}
+.schap .mono{color:var(--faint);padding-top:4px;transition:color .3s}
+.schap b{font-weight:400;font-size:16px;color:var(--quiet);transition:color .3s}
+.schap .sb{grid-column:2;display:none;color:var(--quiet);font-size:15px;line-height:1.4}
+.schap .chips{grid-column:2;display:none;flex-wrap:wrap;gap:5px;margin-top:8px}
+.schap .chips span{font-family:var(--mono);font-size:11px;padding:5px 9px;border-radius:999px;background:var(--tile2);color:var(--text)}
+.schap li.on button{background:var(--tile2)}
+.schap li.on .mono{color:var(--line)}
+.schap li.on b{color:var(--text)}
+.schap li.on .sb{display:block}
+.schap li.on .chips{display:flex}
+.schap li.on .chips span{background:#000}
+.gotab{grid-column:2;display:none;margin-top:10px;border-collapse:collapse;width:100%;font-size:14px}
+.schap li.on .gotab{display:table}
+.gotab th,.gotab td{text-align:left;padding:5px 6px 5px 0;font-weight:400;border-top:1px solid var(--edge)}
+.gotab th{color:var(--quiet);font-family:var(--mono);font-size:11px}
+.gotab td{color:var(--faint);transition:color .3s}
+.gotab td.cur{color:var(--text)}
+.gotab tr:first-child th,.gotab tr:first-child td{border-top:0}
+.sctl{display:flex;align-items:center;gap:6px}
+.sctl .mono{margin-right:auto}
+.sctl .pill{height:38px;padding-inline:16px;font-size:14px}
+@media (max-width:900px){
+  .sbox{grid-template-columns:1fr}
+  .sstage{aspect-ratio:4/3}
+  .schap li:not(.on){display:none}
+  .schap button{padding:4px 2px;cursor:default}
+  .schap li.on button{background:none}
+  .schap b{font-size:19px}
+  .spanel{min-height:330px}
+  .gotab{font-size:13px}.gotab th{font-size:10px}
+  .snote{padding:14px;gap:5px;width:84%}
+  .snote b{font-size:17px}.snote span{font-size:13px}.snote div{display:none}.snote i{margin:3px 0}
+}
 .fine{font-size:13px;margin-top:12px;max-width:60em}
 @media (max-width:900px){.rbox{grid-template-columns:1fr}.reel .mv,.reel .rpin{display:none}
   .rnow{display:grid;gap:3px;min-height:92px;align-content:start;padding:12px 14px;border-radius:14px;background:var(--tile);transition:background .3s,color .3s}
@@ -600,10 +666,45 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
   </div>
 </section>
 
+<section class="pad" id="next">
+  <div class="head reveal">
+    <h2>From one go to the next.</h2>
+    <p class="lead">Numbers don't get you up the wall. Grip finds the moment that cost you, shows you where you already had it right, and checks the fix on your next go. One real go at BlocFit, step by step.</p>
+  </div>
+  <div class="sbox reveal">
+    <div class="sstage" id="sstage" role="group" tabindex="0" aria-roledescription="story" aria-label="How one go turns into a better next go. Tap the right side for next, the left side for back.">
+      <video id="sv" muted playsinline preload="none" poster="clips/blocfit-window.jpg" aria-hidden="true"></video>
+      <svg id="ssvg" viewBox="0 0 1080 608" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect id="sdark" x="-2000" y="-2000" width="5080" height="4608" fill="#0D0E0D" opacity="0"/>
+        <image id="simg" href="clips/story-off.jpg" width="1080" height="608" opacity="0"/>
+        <rect id="sscrim" x="-2000" y="-2000" width="5080" height="4608" fill="#000" opacity="0"/>
+        <g id="sover"></g>
+      </svg>
+      <div class="sbars" id="sbars"></div>
+      <span class="stag mono" id="stag"></span>
+      <div class="sgo" id="sgo"><b>Go 1</b><span class="mono">Dashed: the note to match</span></div>
+      <div class="snote" id="snote" aria-hidden="true">
+        <span class="mono q">Grip · note 1 of 1 · at 0:10</span>
+        <b>Before you reach, sit back into your 0:02 frog.</b>
+        <span>Find a smear for the free foot first, then go.</span>
+        <i></i>
+        <span class="mono q">Drill</span>
+        <span>Next three goes: hold the frog for two breaths before each reach.</span>
+        <div><em class="pill w">Helpful</em><em class="pill">Not for me</em></div>
+      </div>
+    </div>
+    <div class="spanel">
+      <ol class="schap" id="schap"></ol>
+      <div class="sctl"><span class="mono q" id="scount">1 of 6</span><button class="pill" id="sback" type="button">Back</button><button class="pill w" id="sfwd" type="button">Next</button></div>
+    </div>
+  </div>
+  <p class="fine q">Steps 1 to 5 are real frames and angles from one go, faces blurred. Step 6 is an example of how the next goes get checked.</p>
+</section>
+
 <section class="pad" id="real">
   <div class="head reveal">
-    <h2>On a real climb.</h2>
-    <p class="lead">Two goes at BlocFit, filmed on a phone and run through Grip. Every move it spots, every angle it measures, and what it would tell you after.</p>
+    <h2>The full read.</h2>
+    <p class="lead">Two goes at BlocFit, frame by frame. Every move it spots, every angle it measures, and what it would tell you after.</p>
   </div>
   <div class="rbox reveal">
     <div class="reel" id="reel" role="button" tabindex="0" aria-label="Play or pause the clip">
@@ -914,6 +1015,165 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     vio.observe(rv);
   } else setClip(clip);
   if (reduce) rv.removeAttribute('loop');
+
+  /* one go to the next (21 Oct 2026): six steps over the window clip. Joints for 0:10 (off) and 0:02 (good) are traced
+     from the tracker's own skeleton in those frames, in 1080x608 clip pixels; the angles in the copy come from its JSON. */
+  (function () {
+    var stage = $('#sstage'); if (!stage) return;
+    var sv = $('#sv'), svg = $('#ssvg'), img = $('#simg'), dark = $('#sdark'), scrim = $('#sscrim'), over = $('#sover'),
+        bars = $('#sbars'), tag = $('#stag'), sgo = $('#sgo'), note = $('#snote'), list = $('#schap'), count = $('#scount');
+    var OFF = { nose: [537, 130], shL: [494, 161], elL: [456, 196], wrL: [452, 178], shR: [555, 145], elR: [576, 104], wrR: [592, 72],
+                hipL: [507, 273], hipR: [549, 272], knL: [456, 313], anL: [417, 370], ftL: [393, 373], knR: [596, 252], anR: [558, 316], ftR: [569, 325] };
+    var GOOD = { nose: [373, 117], shL: [332, 168], elL: [348, 214], wrL: [338, 250], shR: [398, 131], elR: [407, 88], wrR: [407, 53],
+                 hipL: [382, 290], hipR: [423, 284], knL: [367, 285], anL: [397, 356], ftL: [375, 351], knR: [497, 247], anR: [530, 299], ftR: [545, 303] };
+    var BONES = [['shL', 'shR'], ['shL', 'elL'], ['elL', 'wrL'], ['shR', 'elR'], ['elR', 'wrR'], ['shL', 'hipL'], ['shR', 'hipR'], ['hipL', 'hipR'],
+                 ['hipL', 'knL'], ['knL', 'anL'], ['anL', 'ftL'], ['hipR', 'knR'], ['knR', 'anR'], ['anR', 'ftR']];
+    var JOINTS = ['shL', 'shR', 'elL', 'wrL', 'elR', 'wrR', 'hipL', 'hipR', 'knL', 'anL', 'knR', 'anR'];
+    function mid(p, a, b) { return [(p[a][0] + p[b][0]) / 2, (p[a][1] + p[b][1]) / 2]; }
+    var hipOff = mid(OFF, 'hipL', 'hipR'), hipGood = mid(GOOD, 'hipL', 'hipR');
+    var CH = [
+      { t: 'Film one go.', b: 'Phone on the floor, side-on. Grip tracks every joint while you climb, then reads the whole go back.', chips: ['11 s', '3 moves', 'Faces blurred'], d: 6500, vb: [0, 0, 1080, 608] },
+      { t: 'It finds the moment that cost you.', b: 'At 0:10 you reach right on one straight leg. The other foot hangs free, so your hips swing off the wall and the arms take the weight.', chips: ['Left knee ≈163°', 'Hip ≈167°', 'Free foot off'], d: 6500, vb: [193, 52, 604, 340], src: 'off' },
+      { t: 'And the moment you had it.', b: 'Eight seconds earlier you were in a tight frog: knees wide, hips tucked in, weight on your feet. The best position in the whole go.', chips: ['Knees ≈49° and 95°', 'Hip ≈71°', 'Both feet on'], d: 6500, vb: [133, 35, 604, 340], src: 'good' },
+      { t: 'One note to take back on.', b: "Not a score or a wall of stats. One cue to try on the very next go, built from your own best moment, and a drill to make it stick.", chips: ['1 note', '1 drill'], d: 7000, vb: [83, 6, 700, 394], src: 'good', scrim: .55, card: true },
+      { t: 'Next go, it holds you to it.', b: 'Your 0:02 frog rides over the next go as a ghost, lined up at the hips. Grip ticks the note off when your knees, hips and free foot match it.', chips: ['Ghost from 0:02', 'Lined up at the hips'], d: 7000, vb: [228, 45, 604, 340], src: 'off', tag: 'Ghost: you at 0:02' },
+      { t: 'Go by go, you see it land.', b: 'Each go is checked against the note. Once it lands, Grip moves you on to the next thing.', d: 10500, vb: [175, 56, 736, 414], dark: true, tag: 'Example', ex: true }
+    ];
+    var GOES = [['Hip at the reach', '≈167°', '≈119°', '≈71°'], ['Free foot', 'Hanging', 'Smearing', 'On the wall'], ['The note', 'Not yet', 'Nearly', 'Done']];
+    list.innerHTML = CH.map(function (c, i) {
+      var extra = c.chips ? '<span class="chips">' + c.chips.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</span>'
+        : '<table class="gotab" id="gotab"><tr><th></th><th>Go 1</th><th>Go 2</th><th>Go 3</th></tr>' + GOES.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>'; }).join('') + '</table>';
+      return '<li><button type="button"><span class="mono">0' + (i + 1) + '</span><b>' + c.t + '</b><span class="sb">' + c.b + '</span>' + extra + '</button></li>';
+    }).join('');
+    bars.innerHTML = CH.map(function () { return '<i><b></b></i>'; }).join('');
+    var lis = $$('li', list), fills = $$('b', bars), cur = -1, t0 = 0, held = 0, playing = false, inView = false, vb = CH[0].vb.slice(), vbFrom, vbTo, vbT0 = 0, go = -1, goT0 = 0, pose = null;
+    var small = matchMedia('(max-width:900px)');
+
+    function el(n, a, kids) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+    /* text in viewBox units, so labels stay readable at every zoom and on phones */
+    function unit() { var r = stage.getBoundingClientRect(), v = CH[cur].vb, s = Math.max(r.width / v[2], r.height / v[3]); return 1 / (s || 1); }
+    /* the part of the viewBox the stage actually shows (it is sliced to 4:3 on phones) */
+    function seen() { var r = stage.getBoundingClientRect(), v = CH[cur].vb, s = Math.max(r.width / v[2], r.height / v[3]) || 1, w = r.width / s, h = r.height / s;
+      return [v[0] + (v[2] - w) / 2, v[1] + (v[3] - h) / 2, v[0] + (v[2] + w) / 2, v[1] + (v[3] + h) / 2]; }
+    function label(x, y, txt, side, u, hi, ax, ay) {
+      var fs = (small.matches ? 12 : 13) * u, w = txt.length * fs * .62 + fs * 1.4, h = fs * 2.1, bx = side === 'l' ? x - w : x, v = seen(), pad = 10 * u;
+      bx = Math.max(v[0] + pad, Math.min(v[2] - pad - w, bx)); y = Math.max(v[1] + 30 * u + h / 2, Math.min(v[3] - pad - h / 2, y));
+      var lead = ax == null ? [] : [el('line', { x1: ax, y1: ay, x2: Math.max(bx, Math.min(bx + w, ax)), y2: y, stroke: '#F3F3F0', 'stroke-width': u, opacity: .7 })];
+      return el('g', {}, lead.concat([el('rect', { x: bx, y: y - h / 2, width: w, height: h, rx: h / 2, fill: hi ? '#F3F3F0' : 'rgba(0,0,0,.72)' }),
+        el('text', { x: bx + fs * .7, y: y + fs * .36, 'font-size': fs, style: hi ? 'fill:#000' : '' }, [document.createTextNode(txt)])]));
+    }
+    function callout(p, txt, dx, dy, u, hi) {
+      var lx = p[0] + dx * u, ly = p[1] + dy * u, r = 11 * u;
+      return el('g', {}, [
+        el('circle', { cx: p[0], cy: p[1], r: r, fill: 'none', stroke: hi ? '#F3F3F0' : '#4A74FF', 'stroke-width': 2.2 * u }),
+        el('circle', { cx: p[0], cy: p[1], r: r * 1.9, fill: 'none', stroke: hi ? '#F3F3F0' : '#4A74FF', 'stroke-width': 1 * u, opacity: .5 }),
+        label(lx, ly, txt, dx > 0 ? 'r' : 'l', u, hi, p[0] + (dx > 0 ? r : -r), p[1])]);
+    }
+    function figure(p, o) {
+      var g = el('g', {}), u = o.u;
+      BONES.forEach(function (b) { g.appendChild(el('line', { x1: p[b[0]][0], y1: p[b[0]][1], x2: p[b[1]][0], y2: p[b[1]][1], stroke: o.c, 'stroke-width': o.w * u, 'stroke-linecap': 'round', 'stroke-dasharray': o.dash ? (6 * u) + ' ' + (5 * u) : '' })); });
+      JOINTS.forEach(function (j) { g.appendChild(el('circle', { cx: p[j][0], cy: p[j][1], r: o.r * u, fill: o.fill || '#0a0b0b', stroke: o.c, 'stroke-width': 1.6 * u })); });
+      g.appendChild(el('circle', { cx: p.nose[0], cy: p.nose[1], r: 13 * u * (o.head || 1), fill: 'none', stroke: o.c, 'stroke-width': o.w * u, 'stroke-dasharray': o.dash ? (6 * u) + ' ' + (5 * u) : '' }));
+      return g;
+    }
+    function moved(p, dx, dy, s, cx, cy) { var q = {}; for (var k in p) q[k] = [cx + (p[k][0] - dx) * s, cy + (p[k][1] - dy) * s]; return q; }
+    function lerpPose(a, b, f) { var q = {}; for (var k in a) q[k] = [a[k][0] + (b[k][0] - a[k][0]) * f, a[k][1] + (b[k][1] - a[k][1]) * f]; return q; }
+
+    function overlay(i) {
+      over.innerHTML = ''; var u = unit(), g = el('g', { class: 'f' }), m = small.matches;
+      if (i === 1) {
+        g.appendChild(callout(OFF.ftR, 'Free foot hanging', m ? -30 : 40, m ? 46 : 40, u));
+        g.appendChild(callout(OFF.knL, 'Straight leg ≈163°', -40, m ? -40 : 26, u));
+        g.appendChild(callout(hipOff, 'Hips swing off ≈167°', m ? 30 : 60, m ? -64 : -40, u));
+      } else if (i === 2) {
+        g.appendChild(callout(GOOD.knR, 'Knee wide ≈95°', m ? 20 : 50, -40, u, true));
+        g.appendChild(callout(GOOD.knL, 'Knee ≈49°', -40, 20, u, true));
+        g.appendChild(callout(hipGood, 'Hips in ≈71°', m ? 24 : 60, m ? 56 : 46, u, true));
+      } else if (i === 4) {
+        var gh = moved(GOOD, hipGood[0], hipGood[1], 1, hipOff[0], hipOff[1]);
+        g.appendChild(figure(gh, { u: u, c: '#F3F3F0', w: 2.4, r: 3.5, dash: true, fill: '#F3F3F0' }));
+        var ar = el('path', { d: 'M' + OFF.ftR[0] + ' ' + OFF.ftR[1] + ' Q ' + (OFF.ftR[0] + 70) + ' ' + (OFF.ftR[1] + 10) + ' ' + gh.ftR[0] + ' ' + gh.ftR[1], fill: 'none', stroke: '#F3F3F0', 'stroke-width': 1.6 * u, 'stroke-dasharray': (3 * u) + ' ' + (4 * u) });
+        g.appendChild(ar);
+        g.appendChild(callout(gh.ftR, 'Free foot goes here', m ? -10 : 30, m ? 60 : 44, u, true));
+        g.appendChild(callout(gh.knL, 'Knees wide', -40, -24, u, true));
+      } else if (i === 5) {
+        var s = 1, cx = 540, cy = 330;
+        GOODF = moved(GOOD, hipGood[0], hipGood[1], s, cx, cy); OFFF = moved(OFF, hipOff[0], hipOff[1], s, cx, cy);
+        var wall = el('g', { opacity: .5 });
+        for (var x = 60; x < 1080; x += 60) for (var y = 40; y < 608; y += 60) wall.appendChild(el('circle', { cx: x, cy: y, r: 1.6, fill: 'rgba(243,243,240,.25)' }));
+        [[GOODF.ftL, '#c95f6e'], [GOODF.ftR, '#d9b23a'], [GOODF.wrR, '#5f8fd0']].forEach(function (h) { wall.appendChild(el('ellipse', { cx: h[0][0], cy: h[0][1] + 5, rx: 10, ry: 6.5, fill: h[1], opacity: .8 })); });
+        g.appendChild(wall);
+        g.appendChild(figure(GOODF, { u: 1, c: 'rgba(243,243,240,.4)', w: 1.6, r: 3, dash: true, fill: '#0D0E0D', head: 1.1 }));
+        pose = el('g', {}); g.appendChild(pose);
+        go = -1; setGo(0);
+      }
+      over.appendChild(g);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { g.classList.add('in'); }); });
+    }
+    var GOODF, OFFF, poseFrom = null, poseTo = null;
+    function setGo(n) {
+      if (n === go) return;
+      var now = performance.now();
+      if (n === 0 || !poseTo) poseFrom = poseTo = OFFF;
+      else { poseFrom = lerpPose(poseFrom, poseTo, ease((now - goT0) / 900)); poseTo = lerpPose(OFFF, GOODF, n / 2); }
+      go = n; goT0 = now;
+      sgo.firstChild.textContent = 'Go ' + (n + 1);
+      $$('#gotab tr').forEach(function (tr) { $$('td', tr).forEach(function (td, k) { td.classList.toggle('cur', k === n); }); });
+      if (n === 2) tag.textContent = 'Example · note done'; else tag.textContent = 'Example';
+    }
+    function ease(x) { x = Math.max(0, Math.min(1, x)); return 1 - Math.pow(1 - x, 3); }
+
+    function show(i) {
+      if (i === cur) return; cur = i; var c = CH[i];
+      lis.forEach(function (li, k) { li.classList.toggle('on', k === i); });
+      fills.forEach(function (f, k) { f.style.transform = 'scaleX(' + (k < i ? 1 : 0) + ')'; });
+      count.textContent = (i + 1) + ' of ' + CH.length;
+      if (c.src) img.setAttribute('href', 'clips/story-' + c.src + '.jpg');
+      img.setAttribute('opacity', c.src ? 1 : 0); dark.setAttribute('opacity', c.dark ? 1 : 0); scrim.setAttribute('opacity', c.scrim || 0);
+      sv.style.opacity = i === 0 ? 1 : 0;
+      if (i === 0) { loadVideo(); try { sv.currentTime = 0; } catch (e) {} sv.playbackRate = 1.7; if (inView) sv.play().catch(function () {}); } else sv.pause();
+      note.classList.toggle('on', !!c.card); sgo.classList.toggle('on', i === 5);
+      tag.textContent = c.tag || ''; tag.classList.toggle('on', !!c.tag); tag.classList.toggle('ex', !!c.ex);
+      vbFrom = vb.slice(); vbTo = c.vb; vbT0 = performance.now();
+      if (reduce) vb = vbTo.slice();
+      overlay(i); t0 = performance.now(); held = 0;
+    }
+    function loadVideo() { if (!sv.src) { sv.src = 'clips/blocfit-window' + (innerWidth <= 760 ? '-720' : '') + '.mp4'; } }
+    function step(d) { show((cur + d + CH.length) % CH.length); if (!reduce) playing = inView; }
+    stage.addEventListener('click', function (e) { var r = stage.getBoundingClientRect(); step(e.clientX - r.left < r.width * .3 ? -1 : 1); });
+    stage.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } });
+    $('#sfwd').addEventListener('click', function () { step(1); });
+    $('#sback').addEventListener('click', function () { step(-1); });
+    lis.forEach(function (li, k) { $('button', li).addEventListener('click', function () { show(k); if (!reduce) playing = inView; }); });
+    addEventListener('resize', function () { if (cur >= 0) { var g = go; overlay(cur); if (cur === 5) setGo(g < 0 ? 0 : g); } });
+
+    function tick(now) {
+      if (vbTo) {
+        var f = ease((now - vbT0) / 1000); for (var k = 0; k < 4; k++) vb[k] = vbFrom[k] + (vbTo[k] - vbFrom[k]) * f;
+        svg.setAttribute('viewBox', vb.join(' ')); if (f >= 1) vbTo = null;
+      }
+      if (cur === 5 && pose && poseTo) {
+        var pf = ease((now - goT0) / 900), p = lerpPose(poseFrom, poseTo, pf);
+        pose.innerHTML = ''; pose.appendChild(figure(p, { u: 1, c: '#4A74FF', w: 2.6, r: 4, head: 1.1 }));
+      }
+      var c = CH[cur];
+      if (playing && inView) {
+        var e = now - t0; held = Math.min(1, e / c.d);
+        fills[cur].style.transform = 'scaleX(' + held + ')';
+        if (cur === 5) setGo(Math.min(2, Math.floor(held * 3)));
+        if (e >= c.d) step(1);
+      } else t0 = now - held * c.d;
+      requestAnimationFrame(tick);
+    }
+    show(0);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { es.forEach(function (e) {
+        inView = e.isIntersecting;
+        if (inView) { loadVideo(); if (!reduce) playing = true; if (cur === 0) sv.play().catch(function () {}); } else sv.pause();
+      }); }, { threshold: .4 }).observe(stage);
+    } else { inView = true; playing = !reduce; }
+    requestAnimationFrame(tick);
+  })();
 
   /* header goes solid once you scroll */
   var top = $('#top');
