@@ -4,8 +4,9 @@ import numpy as np
 import pytest
 from PIL import Image, ImageFilter
 
-from coach_worker.motion import build_track, camera_motion, clean_poses
+from coach_worker.motion import build_track, camera_motion
 from coach_worker.pose import Point, PoseFrame, measure
+from coach_worker.steady import clean_poses
 
 
 def body(t: float, dx: float = 0.0, scale: float = 1.0, ankle_x=(0.46, 0.54)) -> PoseFrame:
@@ -94,3 +95,42 @@ def test_a_hand_on_a_hold_is_pinned_while_the_phone_pans():
     drawn = clean_poses(frames)
     on_wall = [pf.visible("left_wrist").x + 0.005 * i for i, pf in enumerate(drawn)]
     assert max(on_wall[4:-4]) - min(on_wall[4:-4]) < 1e-6, "the hand doesn't move on the wall"
+
+
+def test_a_lost_moving_hand_is_predicted_not_frozen():
+    frames = []
+    for i in range(30):
+        f = body(i / 15)
+        f.points["right_wrist"].y -= 0.01 * i             # reaching up steadily
+        if 12 <= i <= 14:
+            f.points["right_wrist"].visibility = 0.0      # lost for 0.2 s mid-reach
+        frames.append(f)
+    drawn = clean_poses(frames)
+    ys = [pf.points["right_wrist"].y for pf in drawn[11:16]]
+    assert all(b < a for a, b in zip(ys, ys[1:], strict=False)), "keeps moving through the gap"
+    assert all(pf.points["right_wrist"].visibility == 1.0 for pf in drawn[11:16])
+
+
+def test_a_joint_lost_for_long_fades_out_then_back_in():
+    frames = [body(i / 15) for i in range(45)]
+    for pf in frames[10:35]:
+        pf.points["left_ankle"].visibility = 0.0          # gone for 1.7 s
+    op = [pf.points["left_ankle"].visibility for pf in clean_poses(frames)]
+    assert op[12] == 1.0                                  # a short loss shows no change
+    assert 0.0 < op[16] < 1.0                             # fading after 0.3 s
+    assert op[22] == 0.0                                  # no ghost left behind
+    assert op[34] > 0.0 and op[35] == 1.0                 # back as it's found again
+
+
+def test_tracking_log_times_a_rest_on_a_hold():
+    from coach_worker.tracklog import tracking_log
+    frames = []
+    for i in range(45):
+        f = body(i / 15)
+        if i >= 20:
+            f.points["right_wrist"].y -= 0.02 * (i - 20)   # leaves the hold at 1.33 s
+        frames.append(f)
+    log = tracking_log(frames, clean_poses(frames), 1.0)
+    rest = next(h for h in log["holds"] if h["limb"] == "right_hand")
+    assert rest["t_start"] == 0.0 and 1.0 <= rest["seconds"] <= 1.4
+    assert "head_from_hips" in log["frames"][0]

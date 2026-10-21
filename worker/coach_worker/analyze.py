@@ -32,6 +32,7 @@ from .sports import Flag
 WINDOW_FPS_MULTIPLIER = 3
 POSE_FPS = 15.0      # the rules read speeds, so tracking needs a steady, fairly high rate
 POSE_WIDTH = 640     # what the pose model sees; it crops to the body itself
+REFINE_WIDTH = 1280  # with the refine pass, so its crop of the climber has pixels to work with
 
 
 @dataclass
@@ -84,11 +85,12 @@ def track_and_flag(video: Path, ctx: CoachContext, settings: Settings, work_dir:
                    detector: PoseDetector | None = None) -> tuple[list[PoseFrame], list[Flag]]:
     """Track the body through the clip and run the sport's rules. ([], []) without pose."""
     own_detector = detector is None
-    detector = detector or try_detector(settings.pose_model_path)
+    detector = detector or try_detector(settings.pose_model_path, refine=settings.pose_refine)
     if not detector:
         return [], []
     try:
-        tracked = fr.sample_frames(video, work_dir, POSE_FPS, POSE_WIDTH, prefix="p")
+        width = REFINE_WIDTH if settings.pose_refine else POSE_WIDTH
+        tracked = fr.sample_frames(video, work_dir, POSE_FPS, width, prefix="p")
         hits = [(i, p) for i, f in enumerate(tracked) if (p := detector.detect(f.path, f.t))]
     finally:
         if own_detector:

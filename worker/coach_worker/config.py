@@ -30,6 +30,9 @@ class Settings:
     keyframe_width: int = 768
     sample_fps: float = 6.0
     pose_model_path: str = ""
+    # a second, cropped look at hands and feet: about half the dropped joints, twice the pose
+    # time. Off until the rules are re-checked with it, since it changes what they see.
+    pose_refine: bool = False
     worker_id: str = "worker-1"
     poll_interval_s: float = 3.0
 
@@ -53,6 +56,7 @@ class Settings:
             keyframe_width=int(env("COACH_KEYFRAME_WIDTH", cls.keyframe_width)),
             sample_fps=float(env("COACH_SAMPLE_FPS", cls.sample_fps)),
             pose_model_path=env("POSE_MODEL_PATH", ""),
+            pose_refine=env("POSE_REFINE", "").lower() in ("1", "true", "yes"),
             worker_id=env("WORKER_ID", cls.worker_id),
             poll_interval_s=float(env("POLL_INTERVAL_S", cls.poll_interval_s)),
         )

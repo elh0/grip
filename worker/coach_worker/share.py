@@ -1,7 +1,7 @@
 """The shareable clip: the whole climb with the blue tracking drawn on, and a small wordmark.
 
 Every share is an ad, so it has to look good: pose runs at `POSE_FPS`, is cleaned
-(motion.clean_poses: no blinking joints, short losses bridged, smoothed), interpolated to every
+(steady.clean_poses: no blinking joints, short losses bridged, smoothed), interpolated to every
 output frame at `OUTPUT_FPS`, and lines are drawn at twice the size
 and scaled down so they stay clean after H.264. Capped at a minute and 1080 px on the long
 side. Without pose there is nothing to show, so it is skipped.
@@ -23,8 +23,9 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw
 
 from . import frames as fr
-from .motion import camera_motion, clean_poses
+from .motion import camera_motion
 from .pose import MAT_BLUE, Point, PoseDetector, PoseFrame, draw_pose, measure, try_detector
+from .steady import clean_poses
 
 log = logging.getLogger(__name__)
 
@@ -99,9 +100,14 @@ def output_size(width: int, height: int, max_side: int = MAX_SIDE) -> tuple[int,
 
 # -- pose over time ---------------------------------------------------------------------
 
-def _mix(a: Point | None, b: Point | None, k: float) -> Point | None:
+def _mix(a: Point | None, b: Point | None, k: float, opacity: bool = False) -> Point | None:
     if a and b:
-        return Point(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, min(a.visibility, b.visibility))
+        v = (a.visibility + (b.visibility - a.visibility) * k if opacity
+             else min(a.visibility, b.visibility))
+        return Point(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, v)
+    if opacity and (a or b):   # fading in or out: thin it towards the missing side
+        p = a or b
+        return Point(p.x, p.y, p.visibility * (1 - k if a else k))
     return a or b
 
 
@@ -114,10 +120,12 @@ def _near(a: PoseFrame, b: PoseFrame, max_gap: float) -> bool:
     return abs(b.t - a.t) <= max_gap and not _jumped(a.com, b.com)
 
 
-def pose_at(poses: list[PoseFrame], t: float, max_gap: float = MAX_GAP_S) -> PoseFrame | None:
+def pose_at(poses: list[PoseFrame], t: float, max_gap: float = MAX_GAP_S,
+            opacity: bool = False) -> PoseFrame | None:
     """The pose at time t: interpolated between samples, held briefly at the ends.
 
     Single-person tracking can hop to someone else in shot; never morph one body into another.
+    With `opacity`, visibility is the drawing's opacity (steady.clean_poses) and is blended too.
     """
     after = bisect.bisect_right(poses, t, key=lambda p: p.t)
     a = poses[after - 1] if after else None
@@ -125,7 +133,13 @@ def pose_at(poses: list[PoseFrame], t: float, max_gap: float = MAX_GAP_S) -> Pos
     if a and b and _near(a, b, max_gap):
         k = (t - a.t) / (b.t - a.t)
         names = a.points.keys() | b.points.keys()
-        points = {n: _mix(a.visible(n), b.visible(n), k) or Point(0, 0, 0) for n in names}
+        if opacity:
+            def get(pf: PoseFrame, n: str) -> Point | None:
+                q = pf.points.get(n)
+                return q if q and q.visibility > 0 else None
+            points = {n: _mix(get(a, n), get(b, n), k, True) or Point(0, 0, 0) for n in names}
+        else:
+            points = {n: _mix(a.visible(n), b.visible(n), k) or Point(0, 0, 0) for n in names}
         return measure(PoseFrame(t=t, points=points))
     near = min((p for p in (a, b) if p), key=lambda p: abs(p.t - t), default=None)
     if near and abs(near.t - t) <= max_gap / 2:
@@ -269,12 +283,12 @@ def render_share(video: Path, out_path: Path, detector: PoseDetector | None, wor
             while len(raw := dec.stdout.read(frame_bytes)) == frame_bytes:
                 t = i / fps
                 im = Image.frombytes("RGB", (w, h), raw)
-                pf = pose_at(poses, t)
+                pf = pose_at(poses, t, opacity=True)
                 if pf:
                     # no centre-of-mass trail: in picture coordinates it lags off the hip
                     # whenever the phone pans, and reads as the tracker losing the body
                     mask = Image.new("L", (w * SUPERSAMPLE, h * SUPERSAMPLE), 0)
-                    draw_pose(ImageDraw.Draw(mask), mask.size, pf, fill=255,
+                    draw_pose(ImageDraw.Draw(mask), mask.size, pf, fill=255, opacity=True,
                               line=line, r=r)
                     im.paste(MAT_BLUE, mask=mask.reduce(SUPERSAMPLE))
                 im.paste(mark, mark_box, mark)
